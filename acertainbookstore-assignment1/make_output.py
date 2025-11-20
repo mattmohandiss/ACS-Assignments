@@ -16,10 +16,10 @@ MAX_CHARS = 250000
 # Target patterns
 # ================================
 EXCLUDE_DIRS = [
-    '.git', 'lib'
+    '.git', 'lib', '.idea'
 ]
 EXCLUDE_FILES = [
-    '.gitignore', 'make_output.py', 'output.txt',
+    '.gitignore', 'make_output.py', 'output.txt', 'build.xml', 'LICENSE', 'README.md', '.DS_Store'
 ]
 
 INCLUDE_FILES: List[str] = ['*.*']
