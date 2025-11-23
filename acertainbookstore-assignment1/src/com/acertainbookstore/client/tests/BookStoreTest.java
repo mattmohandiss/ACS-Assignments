@@ -14,6 +14,7 @@ import org.junit.Test;
 
 import com.acertainbookstore.business.Book;
 import com.acertainbookstore.business.BookCopy;
+import com.acertainbookstore.business.BookRating;
 import com.acertainbookstore.business.CertainBookStore;
 import com.acertainbookstore.business.ImmutableStockBook;
 import com.acertainbookstore.business.StockBook;
@@ -364,4 +365,181 @@ public class BookStoreTest {
 			((StockManagerHTTPProxy) storeManager).stop();
 		}
 	}
+
+
+	/**
+	 * Tests that all books can be retrieved.
+	 *
+	 * @throws BookStoreException
+	 *             the book store exception
+	 */
+	/**
+	 * Tests that rating a book with an invalid ISBN throws an exception and
+	 * does not change store state.
+	 *
+	 * @throws BookStoreException the book store exception
+	 */
+	@Test //JDE test
+	public void testRateInvalidISBN() throws BookStoreException {
+		List<StockBook> booksInStorePreTest = storeManager.getBooks();
+
+		HashSet<BookRating> ratings = new HashSet<BookRating>();
+		ratings.add(new BookRating(TEST_ISBN, 4)); // valid
+		ratings.add(new BookRating(-1, 5)); // invalid ISBN
+
+		try {
+			client.rateBooks(ratings);
+			fail();
+		} catch (BookStoreException ex) {
+			;
+		}
+
+		List<StockBook> booksInStorePostTest = storeManager.getBooks();
+		assertTrue(booksInStorePreTest.containsAll(booksInStorePostTest)
+				&& booksInStorePreTest.size() == booksInStorePostTest.size());
+	}
+
+	/**
+	 * Tests that rating a book with an invalid rating value throws an
+	 * exception and does not change store state.
+	 *
+	 * @throws BookStoreException the book store exception
+	 */
+	@Test //JDE test
+	public void testRateInvalidRating() throws BookStoreException {
+		List<StockBook> booksInStorePreTest = storeManager.getBooks();
+
+		HashSet<BookRating> ratings = new HashSet<BookRating>();
+		ratings.add(new BookRating(TEST_ISBN, 6)); // invalid rating ( >5 )
+
+		try {
+			client.rateBooks(ratings);
+			fail();
+		} catch (BookStoreException ex) {
+			;
+		}
+
+		List<StockBook> booksInStorePostTest = storeManager.getBooks();
+		assertTrue(booksInStorePreTest.containsAll(booksInStorePostTest)
+				&& booksInStorePreTest.size() == booksInStorePostTest.size());
+	}
+
+	/**
+	 * Tests that a valid rating is applied to the book in store.
+	 *
+	 * @throws BookStoreException the book store exception
+	 */
+	@Test //JDE test
+	public void testRateValidISBNAndRating() throws BookStoreException {
+		HashSet<BookRating> ratings = new HashSet<BookRating>();
+		ratings.add(new BookRating(TEST_ISBN, 4)); // valid
+
+		client.rateBooks(ratings);
+
+		List<StockBook> listBooks = storeManager.getBooks();
+		assertTrue(listBooks.size() == 1);
+		StockBook bookInList = listBooks.get(0);
+
+		assertTrue(bookInList.getTotalRating() == 4 && bookInList.getNumTimesRated() == 1
+				&& bookInList.getAverageRating() == 4.0f);
+	}
+
+	/**
+	 * Tests getTopRatedBooks when k = 0 returns an empty list.
+	 *
+	 * @throws BookStoreException the book store exception
+	 */
+	@Test // JDE
+	public void testGetTopRatedBooksKZero() throws BookStoreException {
+		List<Book> top = client.getTopRatedBooks(0);
+		assertTrue(top != null && top.size() == 0);
+	}
+
+	/**
+	 * Tests getTopRatedBooks when k > total number of books returns all books.
+	 *
+	 * @throws BookStoreException the book store exception
+	 */
+	@Test // JDE
+	public void testGetTopRatedBooksKGreaterThanTotal() throws BookStoreException {
+		// Add two more books so we have more than the single default book
+		addBooks(TEST_ISBN + 1, NUM_COPIES);
+		addBooks(TEST_ISBN + 2, NUM_COPIES);
+
+		List<Book> top = client.getTopRatedBooks(10);
+		List<StockBook> allInStore = storeManager.getBooks();
+
+		// Expect all books to be returned
+		assertTrue(top.size() == allInStore.size());
+
+		// Ensure returned ISBNs match the store contents
+		for (Book b : top) {
+			boolean found = false;
+			for (StockBook sb : allInStore) {
+				if (sb.getISBN() == b.getISBN()) {
+					found = true;
+					break;
+				}
+			}
+			assertTrue(found);
+		}
+	}
+
+	/**
+	 * Tests that getTopRatedBooks returns books sorted by decreasing rating
+	 * and that books without ratings appear after all rated books.
+	 *
+	 * @throws BookStoreException the book store exception
+	 */
+	@Test // JDE
+	public void testGetTopRatedBooksSortedAndUnratedLast() throws BookStoreException {
+		// Add a few more books
+		int b1 = TEST_ISBN + 1;
+		int b2 = TEST_ISBN + 2;
+		int b3 = TEST_ISBN + 3;
+		addBooks(b1, NUM_COPIES);
+		addBooks(b2, NUM_COPIES);
+		addBooks(b3, NUM_COPIES);
+
+		// Rate some of them: TEST_ISBN -> 5, b1 -> 3, b3 -> 4. Leave b2 unrated.
+		HashSet<BookRating> ratings = new HashSet<BookRating>();
+		ratings.add(new BookRating(TEST_ISBN, 5));
+		ratings.add(new BookRating(b1, 3));
+		ratings.add(new BookRating(b3, 4));
+		client.rateBooks(ratings);
+
+		List<Book> top = client.getTopRatedBooks(10);
+		List<StockBook> allInStore = storeManager.getBooks();
+
+		// Build a list of average ratings in the same order as 'top'
+		List<Float> averages = new java.util.ArrayList<Float>();
+		for (Book b : top) {
+			float avg = -1.0f;
+			for (StockBook sb : allInStore) {
+				if (sb.getISBN() == b.getISBN()) {
+					avg = sb.getAverageRating();
+					break;
+				}
+			}
+			averages.add(avg);
+		}
+
+		// Check non-increasing order
+		for (int i = 0; i < averages.size() - 1; i++) {
+			float cur = averages.get(i);
+			float next = averages.get(i + 1);
+			assertTrue(cur >= next);
+		}
+
+		// Check that once an unrated book (-1.0f) appears, all following are unrated
+		boolean seenUnrated = false;
+		for (float a : averages) {
+			if (a == -1.0f) {
+				seenUnrated = true;
+			} else {
+				assertFalse(seenUnrated);
+			}
+		}
+	}
+	
 }

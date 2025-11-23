@@ -315,9 +315,28 @@ public class CertainBookStore implements BookStore, StockManager {
 	 * 
 	 * @see com.acertainbookstore.interfaces.BookStore#getTopRatedBooks(int)
 	 */
-	@Override
+	@Override // JDE
 	public synchronized List<Book> getTopRatedBooks(int numBooks) throws BookStoreException {
-		throw new BookStoreException();
+		if (numBooks < 0) {
+			throw new BookStoreException("numBooks = " + numBooks + ", but it must be positive");
+		}
+
+		// Collect all books and sort by average rating (highest first). Books
+		// without ratings have average -1.0f and will appear last.
+		List<BookStoreBook> allBooks = bookMap.values().stream().collect(Collectors.toList());
+
+		allBooks.sort((b1, b2) -> {
+			float r1 = b1.getAverageRating();
+			float r2 = b2.getAverageRating();
+			// descending order
+			return Float.compare(r2, r1);
+		});
+
+		// If requested more books than available, return all. If numBooks==0,
+		// return an empty list.
+		int limit = Math.min(numBooks, allBooks.size());
+
+		return allBooks.stream().limit(limit).map(book -> book.immutableBook()).collect(Collectors.toList());
 	}
 
 	/*
@@ -335,9 +354,37 @@ public class CertainBookStore implements BookStore, StockManager {
 	 * 
 	 * @see com.acertainbookstore.interfaces.BookStore#rateBooks(java.util.Set)
 	 */
-	@Override
+	@Override // JDE
 	public synchronized void rateBooks(Set<BookRating> bookRating) throws BookStoreException {
-		throw new BookStoreException();
+		if (bookRating == null) {
+			throw new BookStoreException(BookStoreConstants.NULL_INPUT);
+		}
+
+		// Validate all ratings first
+		for (BookRating br : bookRating) {
+			if (br == null) {
+				throw new BookStoreException(BookStoreConstants.NULL_INPUT);
+			}
+
+			int isbn = br.getISBN();
+			int rating = br.getRating();
+
+			// validate ISBN exists in stock
+			validateISBNInStock(isbn);
+
+			// validate rating value
+			if (BookStoreUtility.isInvalidRating(rating)) {
+				throw new BookStoreException(BookStoreConstants.RATING + rating + BookStoreConstants.INVALID);
+			}
+		}
+
+		// Apply ratings
+		for (BookRating br : bookRating) {
+			BookStoreBook book = bookMap.get(br.getISBN());
+			if (book != null) {
+				book.addRating(br.getRating());
+			}
+		}
 	}
 
 	/*
