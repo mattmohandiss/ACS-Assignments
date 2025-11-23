@@ -344,9 +344,16 @@ public class CertainBookStore implements BookStore, StockManager {
 	 * 
 	 * @see com.acertainbookstore.interfaces.StockManager#getBooksInDemand()
 	 */
-	@Override
+	@Override // JDE
 	public synchronized List<StockBook> getBooksInDemand() throws BookStoreException {
-		throw new BookStoreException();
+		// Return read-only copies of books that had sale misses (in demand).
+		// Sort by number of sale misses in descending order so most in-demand
+		// books appear first.
+		return bookMap.values().stream()
+				.filter(book -> book.hadSaleMiss())
+				.sorted((b1, b2) -> Long.compare(b2.getNumSaleMisses(), b1.getNumSaleMisses()))
+				.map(book -> book.immutableStockBook())
+				.collect(Collectors.toList());
 	}
 
 	/*
