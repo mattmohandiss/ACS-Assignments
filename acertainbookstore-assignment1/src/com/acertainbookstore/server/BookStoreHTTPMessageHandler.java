@@ -128,7 +128,7 @@ public class BookStoreHTTPMessageHandler extends AbstractHandler {
 				rateBooks(request, response);
 				break;
 
-			case GETTOPRATEBOOKS:
+			case GETTOPRATEDBOOKS:
 				getTopRatedBooks(request, response);
 				break;
 

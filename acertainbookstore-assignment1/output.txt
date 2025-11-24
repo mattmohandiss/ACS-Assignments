@@ -1,4 +1,18 @@
+I have this code below. But i get this error/warning:
 
+[{
+	"resource": "/home/tlvj/java_assignments/acertainbookstore-assignment1/src/com/acertainbookstore/server/BookStoreHTTPMessageHandler.java",
+	"owner": "_generated_diagnostic_collection_name_#3",
+	"code": "16777761",
+	"severity": 4,
+	"message": "Type safety: Unchecked cast from Object to Set<BookRating>",
+	"source": "Java",
+	"startLineNumber": 421,
+	"startColumn": 33,
+	"endLineNumber": 421,
+	"endColumn": 105,
+	"origin": "extHost2"
+}]
 
 
 /**
