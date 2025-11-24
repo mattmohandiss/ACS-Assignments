@@ -14,6 +14,7 @@ import org.eclipse.jetty.server.handler.AbstractHandler;
 
 import com.acertainbookstore.business.BookCopy;
 import com.acertainbookstore.business.BookEditorPick;
+import com.acertainbookstore.business.BookRating;
 import com.acertainbookstore.business.CertainBookStore;
 import com.acertainbookstore.business.StockBook;
 import com.acertainbookstore.utils.BookStoreKryoSerializer;
@@ -414,8 +415,21 @@ public class BookStoreHTTPMessageHandler extends AbstractHandler {
 	 * @param response the response
 	 * @throws IOException Signals that an I/O exception has occurred.
 	 */
+	@SuppressWarnings("unchecked")
 	private void rateBooks(HttpServletRequest request, HttpServletResponse response) throws IOException {
-		throw new IOException();
+		byte[] serializedRequestContent = getSerializedRequestContent(request);
+
+		Set<BookRating> bookRatings = (Set<BookRating>) serializer.get().deserialize(serializedRequestContent);
+		BookStoreResponse bookStoreResponse = new BookStoreResponse();
+
+		try {
+			myBookStore.rateBooks(bookRatings);
+		} catch (BookStoreException ex) {
+			bookStoreResponse.setException(ex);
+		}
+
+		byte[] serializedResponseContent = serializer.get().serialize(bookStoreResponse);
+		response.getOutputStream().write(serializedResponseContent);
 	}
 
 	/**
@@ -426,6 +440,17 @@ public class BookStoreHTTPMessageHandler extends AbstractHandler {
 	 * @throws IOException Signals that an I/O exception has occurred.
 	 */
 	private void getTopRatedBooks(HttpServletRequest request, HttpServletResponse response) throws IOException {
-		throw new IOException();
+		String topRatedBooksString = URLDecoder.decode(request.getParameter(BookStoreConstants.BOOK_NUM_PARAM), StandardCharsets.UTF_8);
+		BookStoreResponse bookStoreResponse = new BookStoreResponse();
+
+		try {
+			int topRateBooks = BookStoreUtility.convertStringToInt(topRatedBooksString);
+			bookStoreResponse.setList(myBookStore.getTopRatedBooks(topRateBooks));
+		} catch (BookStoreException ex) {
+			bookStoreResponse.setException(ex);
+		}
+
+		byte[] serializedResponseContent = serializer.get().serialize(bookStoreResponse);
+		response.getOutputStream().write(serializedResponseContent);
 	}
 }
