@@ -22,7 +22,7 @@ import com.acertainbookstore.utils.BookStoreUtility;
 /**
  * {@link CertainBookStore} implements the {@link BookStore} and
  * {@link StockManager} functionalities.
- * 
+ *
  * @see BookStore
  * @see StockManager
  */
@@ -99,7 +99,7 @@ public class CertainBookStore implements BookStore, StockManager {
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see com.acertainbookstore.interfaces.StockManager#addBooks(java.util.Set)
 	 */
 	public synchronized void addBooks(Set<StockBook> bookSet) throws BookStoreException {
@@ -122,7 +122,7 @@ public class CertainBookStore implements BookStore, StockManager {
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see com.acertainbookstore.interfaces.StockManager#addCopies(java.util.Set)
 	 */
 	public synchronized void addCopies(Set<BookCopy> bookCopiesSet) throws BookStoreException {
@@ -152,7 +152,7 @@ public class CertainBookStore implements BookStore, StockManager {
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see com.acertainbookstore.interfaces.StockManager#getBooks()
 	 */
 	public synchronized List<StockBook> getBooks() {
@@ -163,7 +163,7 @@ public class CertainBookStore implements BookStore, StockManager {
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see
 	 * com.acertainbookstore.interfaces.StockManager#updateEditorPicks(java.util
 	 * .Set)
@@ -187,7 +187,7 @@ public class CertainBookStore implements BookStore, StockManager {
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see com.acertainbookstore.interfaces.BookStore#buyBooks(java.util.Set)
 	 */
 	public synchronized void buyBooks(Set<BookCopy> bookCopiesToBuy) throws BookStoreException {
@@ -234,7 +234,7 @@ public class CertainBookStore implements BookStore, StockManager {
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see com.acertainbookstore.interfaces.StockManager#getBooksByISBN(java.util.
 	 * Set)
 	 */
@@ -253,7 +253,7 @@ public class CertainBookStore implements BookStore, StockManager {
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see com.acertainbookstore.interfaces.BookStore#getBooks(java.util.Set)
 	 */
 	public synchronized List<Book> getBooks(Set<Integer> isbnSet) throws BookStoreException {
@@ -271,7 +271,7 @@ public class CertainBookStore implements BookStore, StockManager {
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see com.acertainbookstore.interfaces.BookStore#getEditorPicks(int)
 	 */
 	public synchronized List<Book> getEditorPicks(int numBooks) throws BookStoreException {
@@ -312,7 +312,7 @@ public class CertainBookStore implements BookStore, StockManager {
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see com.acertainbookstore.interfaces.BookStore#getTopRatedBooks(int)
 	 */
 	@Override
@@ -322,7 +322,7 @@ public class CertainBookStore implements BookStore, StockManager {
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see com.acertainbookstore.interfaces.StockManager#getBooksInDemand()
 	 */
 	@Override
@@ -332,17 +332,54 @@ public class CertainBookStore implements BookStore, StockManager {
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see com.acertainbookstore.interfaces.BookStore#rateBooks(java.util.Set)
 	 */
 	@Override
 	public synchronized void rateBooks(Set<BookRating> bookRating) throws BookStoreException {
-		throw new BookStoreException();
+		if (bookRating == null) {
+			throw new BookStoreException(BookStoreConstants.NULL_INPUT);
+		}
+
+		if (bookRating.isEmpty()) {
+			throw new BookStoreException(BookStoreConstants.EMPTY);
+		}
+
+		BookStoreBook book;
+		int isbn;
+		int value;
+
+		// Validation phase
+		for (BookRating rating : bookRating) {
+			if (rating == null) {
+				throw new BookStoreException(BookStoreConstants.NULL_INPUT);
+			}
+
+			isbn = rating.getISBN();
+			value = rating.getRating();
+
+			// validate isbn and that book are nn store
+			validateISBNInStock(isbn);
+
+			// validate rating
+			if (value < 0 || value > 5) {
+				throw new BookStoreException(BookStoreConstants.RATING + value + " is not a valid book rating (0-5).");
+			}
+		}
+
+		// rating phase
+		for (BookRating rating :  bookRating) {
+			isbn = rating.getISBN();
+			value = rating.getRating();
+			book = bookMap.get(isbn);
+
+			book.addRating(value);
+		}
 	}
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see com.acertainbookstore.interfaces.StockManager#removeAllBooks()
 	 */
 	public synchronized void removeAllBooks() throws BookStoreException {
@@ -351,7 +388,7 @@ public class CertainBookStore implements BookStore, StockManager {
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see com.acertainbookstore.interfaces.StockManager#removeBooks(java.util.Set)
 	 */
 	public synchronized void removeBooks(Set<Integer> isbnSet) throws BookStoreException {
