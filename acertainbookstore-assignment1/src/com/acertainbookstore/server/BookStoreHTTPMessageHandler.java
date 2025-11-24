@@ -30,7 +30,7 @@ import com.esotericsoftware.kryo.io.Input;
  * which is invoked to handle messages received by the
  * {@link BookStoreHTTPServerUtility}. It decodes the HTTP message and invokes
  * the {@link CertainBookStore} server API.
- * 
+ *
  * @see AbstractHandler
  * @see BookStoreHTTPServerUtility
  * @see CertainBookStore
@@ -56,7 +56,7 @@ public class BookStoreHTTPMessageHandler extends AbstractHandler {
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see org.eclipse.jetty.server.Handler#handle(java.lang.String,
 	 * org.eclipse.jetty.server.Request, javax.servlet.http.HttpServletRequest,
 	 * javax.servlet.http.HttpServletResponse)
@@ -121,6 +121,14 @@ public class BookStoreHTTPMessageHandler extends AbstractHandler {
 
 			case GETSTOCKBOOKSBYISBN:
 				getStockBooksByISBN(request, response);
+				break;
+
+			case RATEBOOKS:
+				rateBooks(request, response);
+				break;
+
+			case GETTOPRATEBOOKS:
+				getTopRatedBooks(request, response);
 				break;
 
 			default:
@@ -397,5 +405,27 @@ public class BookStoreHTTPMessageHandler extends AbstractHandler {
 		byte[] serializedRequestContent = in.readBytes(request.getContentLength());
 		in.close();
 		return serializedRequestContent;
+	}
+
+	/**
+	 * rate books
+	 *
+	 * @param request the request
+	 * @param response the response
+	 * @throws IOException Signals that an I/O exception has occurred.
+	 */
+	private void rateBooks(HttpServletRequest request, HttpServletResponse response) throws IOException {
+		throw new IOException();
+	}
+
+	/**
+	 * fetches k top rated books
+	 *
+	 * @param request the request
+	 * @param response the response
+	 * @throws IOException Signals that an I/O exception has occurred.
+	 */
+	private void getTopRatedBooks(HttpServletRequest request, HttpServletResponse response) throws IOException {
+		throw new IOException();
 	}
 }
