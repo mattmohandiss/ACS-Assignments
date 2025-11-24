@@ -2,6 +2,7 @@ package com.acertainbookstore.business;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -10,6 +11,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Random;
 import java.util.Set;
+import java.util.stream.Collector;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -317,7 +319,18 @@ public class CertainBookStore implements BookStore, StockManager {
 	 */
 	@Override
 	public synchronized List<Book> getTopRatedBooks(int numBooks) throws BookStoreException {
-		throw new BookStoreException();
+		if (numBooks < 0) {
+			throw new BookStoreException(BookStoreConstants.BOOK_NUM_PARAM + " is: " + numBooks + " (must be a positive number.");
+		}
+
+		List<Book> topRated = bookMap.values().stream()
+								.filter(book -> book.getNumTimesRated() > 0)
+								.sorted(Comparator.comparing((BookStoreBook book) -> book.getAverageRating()).reversed())
+								.limit(numBooks)
+								.map(book -> book.immutableBook())
+								.collect(Collectors.toList());
+
+		return topRated;
 	}
 
 	/*
