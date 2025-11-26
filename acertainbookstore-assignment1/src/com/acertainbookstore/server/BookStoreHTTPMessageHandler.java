@@ -124,12 +124,19 @@ public class BookStoreHTTPMessageHandler extends AbstractHandler {
 				getStockBooksByISBN(request, response);
 				break;
 
+			// [2.3.2]
 			case RATEBOOKS:
 				rateBooks(request, response);
 				break;
 
+			// [2.3.2]
 			case GETTOPRATEDBOOKS:
 				getTopRatedBooks(request, response);
+				break;
+
+			// [2.3.3]
+			case GETBOOKSINDEMAND:
+				getBooksInDemand(request, response);
 				break;
 
 			default:
@@ -452,5 +459,9 @@ public class BookStoreHTTPMessageHandler extends AbstractHandler {
 
 		byte[] serializedResponseContent = serializer.get().serialize(bookStoreResponse);
 		response.getOutputStream().write(serializedResponseContent);
+	}
+
+	private void getBooksInDemand(HttpServletRequest request, HttpServletResponse response) throws IOException {
+
 	}
 }

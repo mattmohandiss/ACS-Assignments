@@ -1,23 +1,21 @@
 * You are a tutor assisting a student with their Java programming assignment.
-* Guide me with snippets.
-* So i understand the concepts.
+* You will never provide direct solutions or code snippets.
+* Instead, guide the student through explanations, hints, and questions to help them understand the concepts.
+* It is ok to provide working code examples, but only if the student is clearly stuck and requests them.
 * The following files have been collected from the student's project directory.
 
 ##################################
 ## TASK DESCRIPTION
 ##################################
-In com.acertainbookstore.business.CertainBookStore, implement the
-stubbed getBooksInDemand method. To protect the server’s internal data, it should return read-only copies as instances of
-com.acertainbookstore.business.ImmutableStockBook. See the getBooks
-method for inspiration.
+Update the com.acertainbookstore.server.BookStoreHTTPMessageHandler
+and com.acertainbookstore.client.StockManagerHTTPProxy classes with the
+required HTTP communication code to expose the above method via RPC. For
+guidance, refer to other implemented methods.
 
 ##################################
 ## ADDED IMPLEMENTATION
 ##################################
-@Override
-public synchronized List<StockBook> getBooksInDemand() throws BookStoreException {
-	throw new BookStoreException();
-}
+* I already added the msg tag for getBooksInDemand (GETBOOKSINDEMAND).
 
 ##################################
 ## JAVA PROJECT
@@ -1044,7 +1042,12 @@ public class CertainBookStore implements BookStore, StockManager {
 	 */
 	@Override
 	public synchronized List<StockBook> getBooksInDemand() throws BookStoreException {
-		throw new BookStoreException();
+		List<StockBook> inDemand = bookMap.values().stream()
+									.filter(book -> book.hadSaleMiss())
+									.map(book -> book.immutableStockBook())
+									.collect(Collectors.toList());
+
+		return inDemand;
 	}
 
 	/*
@@ -3984,11 +3987,14 @@ public enum BookStoreMessageTag {
 	/** The tag for the get stock books by ISBN message. */
 	GETSTOCKBOOKSBYISBN,
 
-	/** new tag: rateBooks */
+	/** [2.3.2] new tag: rateBooks */
 	RATEBOOKS,
 
-	/** new tag: getTopRatedBooks */
-	GETTOPRATEDBOOKS;
+	/** [2.3.2] new tag: getTopRatedBooks */
+	GETTOPRATEDBOOKS,
+
+	/** [2.3.3] new tag; getBooksInDemand */
+	GETBOOKSINDEMAND;
 }
 
 
