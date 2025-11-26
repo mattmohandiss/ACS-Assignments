@@ -14,6 +14,7 @@ import org.junit.Test;
 
 import com.acertainbookstore.business.Book;
 import com.acertainbookstore.business.BookCopy;
+import com.acertainbookstore.business.BookRating;
 import com.acertainbookstore.business.CertainBookStore;
 import com.acertainbookstore.business.ImmutableStockBook;
 import com.acertainbookstore.business.StockBook;
@@ -26,7 +27,7 @@ import com.acertainbookstore.utils.BookStoreException;
 
 /**
  * {@link BookStoreTest} tests the {@link BookStore} interface.
- * 
+ *
  * @see BookStore
  */
 public class BookStoreTest {
@@ -345,6 +346,198 @@ public class BookStoreTest {
 		}
 
 		List<StockBook> booksInStorePostTest = storeManager.getBooks();
+		assertTrue(booksInStorePreTest.containsAll(booksInStorePostTest)
+				&& booksInStorePreTest.size() == booksInStorePostTest.size());
+	}
+
+	/**
+	 *
+	 * @throws BookStoreException
+	 */
+	@Test
+	public void testRateBooksSingleValidRating() throws BookStoreException {
+		// initial book
+		Set<Integer> isbns = new HashSet<Integer>();
+		isbns.add(TEST_ISBN);
+		List<StockBook> beforeList = storeManager.getBooksByISBN(isbns);
+		assertEquals(1, beforeList.size());
+		StockBook before = beforeList.get(0);
+
+		assertEquals(0L, before.getNumTimesRated());
+		assertEquals(0L, before.getTotalRating());
+		assertEquals(-1.0f, before.getAverageRating(), BookStoreConstants.EPSILON);
+
+		// rate book
+		Set<BookRating> ratings = new HashSet<BookRating>();
+		ratings.add(new BookRating(TEST_ISBN, 4));
+		client.rateBooks(ratings);
+
+		// updated state
+		List<StockBook> afterList = storeManager.getBooksByISBN(isbns);
+		assertEquals(1, afterList.size());
+		StockBook after = afterList.get(0);
+
+		assertEquals(1L, after.getNumTimesRated());
+		assertEquals(4L, after.getTotalRating());
+		assertEquals(4.0f, after.getAverageRating(), BookStoreConstants.EPSILON);
+	}
+
+	/**
+	 *
+	 * @throws BookStoreException
+	 */
+	@Test
+	public void testRateBooksInvalidRatingOutOfRange() throws BookStoreException {
+		List<StockBook> booksInStorePreTest = storeManager.getBooks();
+
+		// invalid rating
+		Set<BookRating> ratings = new HashSet<BookRating>();
+		ratings.add(new BookRating(TEST_ISBN, 6));
+
+		try {
+			client.rateBooks(ratings);
+			fail();
+		} catch (BookStoreException ex) {}
+
+		List<StockBook> booksInStorePostTest = storeManager.getBooks();
+		// assert true
+		assertTrue(booksInStorePreTest.containsAll(booksInStorePostTest)
+				&& booksInStorePreTest.size() == booksInStorePostTest.size());
+
+		Set<Integer> isbns = new HashSet<Integer>();
+		isbns.add(TEST_ISBN);
+		List<StockBook> list = storeManager.getBooksByISBN(isbns);
+		assertEquals(1, list.size());
+		StockBook book = list.get(0);
+
+		assertEquals(0L, book.getNumTimesRated());
+		assertEquals(0L, book.getTotalRating());
+		assertEquals(-1.0f, book.getAverageRating(), BookStoreConstants.EPSILON);
+	}
+
+	/**
+	 *
+	 * @throws BookStoreException
+	 */
+	@Test
+	public void testRateBooksInvalidISBN() throws BookStoreException {
+		List<StockBook> booksInStorePreTest = storeManager.getBooks();
+
+		// ISBN -1 is invalid
+		Set<BookRating> ratings = new HashSet<BookRating>();
+		ratings.add(new BookRating(-1, 3));
+
+		try {
+			client.rateBooks(ratings);
+			fail();
+		} catch (BookStoreException ex) {
+			// expected
+		}
+
+		List<StockBook> booksInStorePostTest = storeManager.getBooks();
+		// Check pre and post state are same
+		assertTrue(booksInStorePreTest.containsAll(booksInStorePostTest)
+				&& booksInStorePreTest.size() == booksInStorePostTest.size());
+	}
+
+	/**
+	 *
+	 * @throws BookStoreException
+	 */
+	@Test
+	public void testGetTopRatedBooksOrdering() throws BookStoreException {
+		// add books
+		Set<StockBook> booksToAdd = new HashSet<StockBook>();
+		booksToAdd.add(new ImmutableStockBook(
+			TEST_ISBN + 1,
+			"The Art of Testing",
+			"Donald Knuth",
+			50.0f, NUM_COPIES,
+			0,
+			0,
+			0,
+			false
+		));
+
+		booksToAdd.add(new ImmutableStockBook(
+			TEST_ISBN + 2,
+			"The Joy of Bugs",
+			"Grace Hopper",
+			40.0f, NUM_COPIES,
+			0,
+			0,
+			0,
+			false
+		));
+
+		storeManager.addBooks(booksToAdd);
+
+		// rate books
+		Set<BookRating> ratings1 = new HashSet<BookRating>();
+		ratings1.add(new BookRating(TEST_ISBN, 3));
+		client.rateBooks(ratings1);
+
+		Set<BookRating> ratings2 = new HashSet<BookRating>();
+		ratings2.add(new BookRating(TEST_ISBN + 1, 5));
+		client.rateBooks(ratings2);
+
+		Set<BookRating> ratings3 = new HashSet<BookRating>();
+		ratings3.add(new BookRating(TEST_ISBN + 2, 1));
+		client.rateBooks(ratings3);
+
+		// request 2 top rated
+		List<Book> topRated = client.getTopRatedBooks(2);
+		assertEquals(2, topRated.size());
+
+		// idx 0 == rating 5
+		assertEquals(TEST_ISBN + 1, topRated.get(0).getISBN());
+		// idx 1 ==  rating 3
+		assertEquals(TEST_ISBN, topRated.get(1).getISBN());
+	}
+
+	/**
+	 *
+	 * @throws BookStoreException
+	 */
+	public void testGetTopRatedBooksSkipsUnratedBooks() throws BookStoreException {
+		Set<StockBook> booksToAdd = new HashSet<StockBook>();
+		booksToAdd.add(new ImmutableStockBook(
+			TEST_ISBN + 1,
+			"Rated Book",
+			"Author",
+			20.0f, NUM_COPIES,
+			0,
+			0,
+			0,
+			false
+		));
+
+		storeManager.addBooks(booksToAdd);
+
+		// rate new book
+		Set<BookRating> ratings = new HashSet<BookRating>();
+		ratings.add(new BookRating(TEST_ISBN + 1, 5));
+		client.rateBooks(ratings);
+
+		// request more books
+		List<Book> topRated = client.getTopRatedBooks(5);
+
+		// only the rated book
+		assertEquals(1, topRated.size());
+		assertEquals(TEST_ISBN + 1, topRated.get(0).getISBN());
+	}
+
+	@Test
+	public void testGetTopRatedBooksNegativeNumBooks() throws BookStoreException {
+		List<StockBook> booksInStorePreTest = storeManager.getBooks();
+
+		try {
+			client.getTopRatedBooks(-1);
+			fail();
+		} catch (BookStoreException ex) {}
+
+		List<StockBook> booksInStorePostTest = storeManager.getBooks();
+
 		assertTrue(booksInStorePreTest.containsAll(booksInStorePostTest)
 				&& booksInStorePreTest.size() == booksInStorePostTest.size());
 	}

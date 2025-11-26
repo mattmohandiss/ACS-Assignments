@@ -7,7 +7,7 @@
 ##################################
 ## TASK DESCRIPTION
 ##################################
-
+* Assist me with adding tests for 'rateBooks' and 'getTopRatedBooks'.
 
 ##################################
 ## ADDED IMPLEMENTATION
@@ -192,7 +192,7 @@ public class BookCopy {
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see java.lang.Object#equals(java.lang.Object)
 	 */
 	@Override
@@ -206,7 +206,7 @@ public class BookCopy {
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see java.lang.Object#hashCode()
 	 */
 	@Override
@@ -285,7 +285,7 @@ public class BookEditorPick {
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see java.lang.Object#equals(java.lang.Object)
 	 */
 	@Override
@@ -299,7 +299,7 @@ public class BookEditorPick {
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see java.lang.Object#hashCode()
 	 */
 	@Override
@@ -377,7 +377,7 @@ public class BookRating {
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see java.lang.Object#equals(java.lang.Object)
 	 */
 	@Override
@@ -391,7 +391,7 @@ public class BookRating {
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see java.lang.Object#hashCode()
 	 */
 	@Override
@@ -410,7 +410,7 @@ import com.acertainbookstore.utils.BookStoreUtility;
  * {@link BookStoreBook} implements all parts of the book. Only parts of it are
  * available in the bookstore client and stock manager, cf. the {@link Book} and
  * {@link StockBook} interfaces.
- * 
+ *
  * @see Book
  * @see StockBook
  * @see ImmutableBook
@@ -621,7 +621,7 @@ public class BookStoreBook extends ImmutableBook {
 
 	/**
 	 * Increments the amount of missed sales of the book.
-	 * 
+	 *
 	 * @param numSaleMisses
 	 *            the number of sales misses encountered
 	 */
@@ -1134,7 +1134,7 @@ import com.acertainbookstore.utils.BookStoreConstants;
  * {@link ImmutableBook} is the object that gets sent back to the bookstore
  * client as a {@link Book}. We do not allow the bookstore client to make any
  * changes to this data structure.
- * 
+ *
  * @see Book
  */
 public class ImmutableBook implements Book {
@@ -1183,7 +1183,7 @@ public class ImmutableBook implements Book {
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see com.acertainbookstore.business.Book#getISBN()
 	 */
 	public int getISBN() {
@@ -1192,7 +1192,7 @@ public class ImmutableBook implements Book {
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see com.acertainbookstore.business.Book#getTitle()
 	 */
 	public String getTitle() {
@@ -1201,7 +1201,7 @@ public class ImmutableBook implements Book {
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see com.acertainbookstore.business.Book#getAuthor()
 	 */
 	public String getAuthor() {
@@ -1210,7 +1210,7 @@ public class ImmutableBook implements Book {
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see com.acertainbookstore.business.Book#getPrice()
 	 */
 	public float getPrice() {
@@ -1219,7 +1219,7 @@ public class ImmutableBook implements Book {
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see java.lang.Object#equals(java.lang.Object)
 	 */
 	@Override
@@ -1236,7 +1236,7 @@ public class ImmutableBook implements Book {
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see java.lang.Object#toString()
 	 */
 	@Override
@@ -1247,7 +1247,7 @@ public class ImmutableBook implements Book {
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see java.lang.Object#hashCode()
 	 */
 	@Override
@@ -1263,7 +1263,7 @@ package com.acertainbookstore.business;
 /**
  * {@link ImmutableStockBook} gets sent back to the {@link StockManager}. We do
  * not allow the {@link StockManager} to make any changes to the data structure.
- * 
+ *
  * @see StockManager
  * @see ImmutableBook
  * @see StockBook
@@ -1332,7 +1332,7 @@ public final class ImmutableStockBook extends ImmutableBook implements StockBook
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see com.acertainbookstore.business.StockBook#getTotalRating()
 	 */
 	public long getTotalRating() {
@@ -1341,7 +1341,7 @@ public final class ImmutableStockBook extends ImmutableBook implements StockBook
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see com.acertainbookstore.business.StockBook#getTimesRated()
 	 */
 	public long getNumTimesRated() {
@@ -1350,7 +1350,7 @@ public final class ImmutableStockBook extends ImmutableBook implements StockBook
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see com.acertainbookstore.business.StockBook#getNumCopies()
 	 */
 	public int getNumCopies() {
@@ -1359,7 +1359,7 @@ public final class ImmutableStockBook extends ImmutableBook implements StockBook
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see com.acertainbookstore.business.StockBook#getSaleMisses()
 	 */
 	public long getNumSaleMisses() {
@@ -1368,7 +1368,7 @@ public final class ImmutableStockBook extends ImmutableBook implements StockBook
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see com.acertainbookstore.business.StockBook#getAverageRating()
 	 */
 	public float getAverageRating() {
@@ -1377,7 +1377,7 @@ public final class ImmutableStockBook extends ImmutableBook implements StockBook
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see com.acertainbookstore.business.StockBook#isEditorPick()
 	 */
 	public boolean isEditorPick() {
@@ -1392,7 +1392,7 @@ package com.acertainbookstore.business;
 /**
  * {@link StockBook} implements the {@link Book} data-structure that a
  * {@link StockManager} works with.
- * 
+ *
  * @see Book
  * @see StockBook
  * @see StockManager
@@ -1450,11 +1450,11 @@ package com.acertainbookstore.client;
 /**
  * {@link BookStoreClientConstants} stores the constants used by the
  * {@link CertainBookStore} proxy and client classes.
- * 
+ *
  * @see CertainBookStore
  */
 public final class BookStoreClientConstants {
-	
+
 	/** The Constant CLIENT_MAX_CONNECTION_ADDRESS. */
 	public static final int CLIENT_MAX_CONNECTION_ADDRESS = 200;
 
@@ -1692,7 +1692,7 @@ import com.acertainbookstore.utils.BookStoreUtility;
  * {@link StockManagerHTTPProxy} implements the client level synchronous
  * {@link CertainBookStore} API declared in the {@link StockManager} class. Uses
  * the HTTP protocol for communication with the server.
- * 
+ *
  * @see CertainBookStore
  * @see StockManager
  */
@@ -1754,7 +1754,7 @@ public class StockManagerHTTPProxy implements StockManager {
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see
 	 * com.acertainbookstore.interfaces.StockManager#addBooks(java.util.Set)
 	 */
@@ -1766,7 +1766,7 @@ public class StockManagerHTTPProxy implements StockManager {
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see
 	 * com.acertainbookstore.interfaces.StockManager#addCopies(java.util.Set)
 	 */
@@ -1778,7 +1778,7 @@ public class StockManagerHTTPProxy implements StockManager {
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see com.acertainbookstore.interfaces.StockManager#getBooks()
 	 */
 	@SuppressWarnings("unchecked")
@@ -1792,7 +1792,7 @@ public class StockManagerHTTPProxy implements StockManager {
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see
 	 * com.acertainbookstore.interfaces.StockManager#updateEditorPicks(java.util
 	 * .Set)
@@ -1805,7 +1805,7 @@ public class StockManagerHTTPProxy implements StockManager {
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see com.acertainbookstore.interfaces.StockManager#getBooksInDemand()
 	 */
 	@Override
@@ -1815,7 +1815,7 @@ public class StockManagerHTTPProxy implements StockManager {
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see com.acertainbookstore.interfaces.StockManager#removeAllBooks()
 	 */
 	public void removeAllBooks() throws BookStoreException {
@@ -1830,7 +1830,7 @@ public class StockManagerHTTPProxy implements StockManager {
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see
 	 * com.acertainbookstore.interfaces.StockManager#removeBooks(java.util.Set)
 	 */
@@ -1842,7 +1842,7 @@ public class StockManagerHTTPProxy implements StockManager {
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see
 	 * com.acertainbookstore.interfaces.StockManager#getBooksByISBN(java.util.
 	 * Set)
@@ -1898,7 +1898,7 @@ import com.acertainbookstore.utils.BookStoreException;
 
 /**
  * {@link BookStoreTest} tests the {@link BookStore} interface.
- * 
+ *
  * @see BookStore
  */
 public class BookStoreTest {
@@ -2270,7 +2270,7 @@ import com.acertainbookstore.utils.BookStoreException;
 
 /**
  * {@StockManagerTest} tests the {@link StockManager} interface.
- * 
+ *
  * @see StockManager
  */
 public class StockManagerTest {
@@ -2298,7 +2298,7 @@ public class StockManagerTest {
 		try {
 			String localTestProperty = System.getProperty(BookStoreConstants.PROPERTY_KEY_LOCAL_TEST);
 			localTest = (localTestProperty != null) ? Boolean.parseBoolean(localTestProperty) : localTest;
-			
+
 			if (localTest) {
 				CertainBookStore store = new CertainBookStore();
 				storeManager = store;
@@ -2307,7 +2307,7 @@ public class StockManagerTest {
 				storeManager = new StockManagerHTTPProxy("http://localhost:8081/stock");
 				client = new BookStoreHTTPProxy("http://localhost:8081");
 			}
-			
+
 			storeManager.removeAllBooks();
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -3692,7 +3692,7 @@ import org.objenesis.strategy.StdInstantiatorStrategy;
 /**
  * {@link BookStoreKryoSerializer} serializes objects to arrays of bytes
  * representing strings using the Kryo library.
- * 
+ *
  * @see BookStoreSerializer
  */
 public final class BookStoreKryoSerializer implements BookStoreSerializer {
@@ -3719,7 +3719,7 @@ public final class BookStoreKryoSerializer implements BookStoreSerializer {
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see
 	 * com.acertainbookstore.interfaces.BookStoreSerializer#serialize(java.lang.
 	 * Object)
@@ -3735,7 +3735,7 @@ public final class BookStoreKryoSerializer implements BookStoreSerializer {
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see com.acertainbookstore.interfaces.BookStoreSerializer#deserialize(byte[])
 	 */
 	@Override
