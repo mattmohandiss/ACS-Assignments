@@ -8,6 +8,7 @@ import org.eclipse.jetty.util.thread.QueuedThreadPool;
 
 import com.acertainbookstore.business.BookCopy;
 import com.acertainbookstore.business.BookEditorPick;
+import com.acertainbookstore.business.CertainBookStore;
 import com.acertainbookstore.business.StockBook;
 import com.acertainbookstore.utils.BookStoreKryoSerializer;
 import com.acertainbookstore.interfaces.BookStoreSerializer;
@@ -22,7 +23,7 @@ import com.acertainbookstore.utils.BookStoreUtility;
  * {@link StockManagerHTTPProxy} implements the client level synchronous
  * {@link CertainBookStore} API declared in the {@link StockManager} class. Uses
  * the HTTP protocol for communication with the server.
- * 
+ *
  * @see CertainBookStore
  * @see StockManager
  */
@@ -84,7 +85,7 @@ public class StockManagerHTTPProxy implements StockManager {
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see
 	 * com.acertainbookstore.interfaces.StockManager#addBooks(java.util.Set)
 	 */
@@ -96,7 +97,7 @@ public class StockManagerHTTPProxy implements StockManager {
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see
 	 * com.acertainbookstore.interfaces.StockManager#addCopies(java.util.Set)
 	 */
@@ -108,7 +109,7 @@ public class StockManagerHTTPProxy implements StockManager {
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see com.acertainbookstore.interfaces.StockManager#getBooks()
 	 */
 	@SuppressWarnings("unchecked")
@@ -122,7 +123,7 @@ public class StockManagerHTTPProxy implements StockManager {
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see
 	 * com.acertainbookstore.interfaces.StockManager#updateEditorPicks(java.util
 	 * .Set)
@@ -135,17 +136,23 @@ public class StockManagerHTTPProxy implements StockManager {
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see com.acertainbookstore.interfaces.StockManager#getBooksInDemand()
 	 */
 	@Override
+	@SuppressWarnings("unchecked")
 	public List<StockBook> getBooksInDemand() throws BookStoreException {
-		throw new BookStoreException("Not implemented");
+		String urlString = serverAddress + "/" + BookStoreMessageTag.GETBOOKSINDEMAND;
+
+		BookStoreRequest bookStoreRequest = BookStoreRequest.newGetRequest(urlString);
+		BookStoreResponse bookStoreResponse = BookStoreUtility.performHttpExchange(client, bookStoreRequest, serializer.get());
+
+		return (List<StockBook>) bookStoreResponse.getList();
 	}
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see com.acertainbookstore.interfaces.StockManager#removeAllBooks()
 	 */
 	public void removeAllBooks() throws BookStoreException {
@@ -160,7 +167,7 @@ public class StockManagerHTTPProxy implements StockManager {
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see
 	 * com.acertainbookstore.interfaces.StockManager#removeBooks(java.util.Set)
 	 */
@@ -172,7 +179,7 @@ public class StockManagerHTTPProxy implements StockManager {
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see
 	 * com.acertainbookstore.interfaces.StockManager#getBooksByISBN(java.util.
 	 * Set)

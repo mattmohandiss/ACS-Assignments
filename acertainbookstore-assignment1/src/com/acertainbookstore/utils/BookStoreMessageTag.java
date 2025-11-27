@@ -34,5 +34,14 @@ public enum BookStoreMessageTag {
 	REMOVEBOOKS,
 
 	/** The tag for the get stock books by ISBN message. */
-	GETSTOCKBOOKSBYISBN;
+	GETSTOCKBOOKSBYISBN,
+
+	/** [2.3.2] new tag: rateBooks */
+	RATEBOOKS,
+
+	/** [2.3.2] new tag: getTopRatedBooks */
+	GETTOPRATEDBOOKS,
+
+	/** [2.3.3] new tag; getBooksInDemand */
+	GETBOOKSINDEMAND;
 }

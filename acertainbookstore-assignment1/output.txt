@@ -1,0 +1,4415 @@
+Why is the test below failing when i test it over HTTP?
+
+##################################
+## TASK DESCRIPTION
+##################################
+1) testRateBooksSingleValidRating(com.acertainbookstore.client.tests.BookStoreTest)
+java.lang.IllegalArgumentException: Class is not registered: com.acertainbookstore.business.BookRating
+Note: To register this class use: kryo.register(com.acertainbookstore.business.BookRating.class);
+        at com.esotericsoftware.kryo.Kryo.getRegistration(Kryo.java:579)
+        at com.esotericsoftware.kryo.util.DefaultClassResolver.writeClass(DefaultClassResolver.java:112)
+        at com.esotericsoftware.kryo.Kryo.writeClass(Kryo.java:613)
+        at com.esotericsoftware.kryo.serializers.CollectionSerializer.write(CollectionSerializer.java:141)
+        at com.esotericsoftware.kryo.serializers.CollectionSerializer.write(CollectionSerializer.java:44)
+        at com.esotericsoftware.kryo.Kryo.writeClassAndObject(Kryo.java:711)
+        at com.acertainbookstore.utils.BookStoreKryoSerializer.serialize(BookStoreKryoSerializer.java:56)
+        at com.acertainbookstore.utils.BookStoreUtility.performHttpExchange(BookStoreUtility.java:94)
+        at com.acertainbookstore.client.BookStoreHTTPProxy.rateBooks(BookStoreHTTPProxy.java:152)
+        at com.acertainbookstore.client.tests.BookStoreTest.testRateBooksSingleValidRating(BookStoreTest.java:373)
+        at java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(DirectMethodHandleAccessor.java:104)
+        at java.base/java.lang.reflect.Method.invoke(Method.java:565)
+        at org.junit.runners.model.FrameworkMethod$1.runReflectiveCall(FrameworkMethod.java:50)
+        at org.junit.internal.runners.model.ReflectiveCallable.run(ReflectiveCallable.java:12)
+        at org.junit.runners.model.FrameworkMethod.invokeExplosively(FrameworkMethod.java:47)
+        at org.junit.internal.runners.statements.InvokeMethod.evaluate(InvokeMethod.java:17)
+        at org.junit.internal.runners.statements.RunBefores.evaluate(RunBefores.java:26)
+        at org.junit.internal.runners.statements.RunAfters.evaluate(RunAfters.java:27)
+        at org.junit.runners.ParentRunner.runLeaf(ParentRunner.java:325)
+        at org.junit.runners.BlockJUnit4ClassRunner.runChild(BlockJUnit4ClassRunner.java:78)
+        at org.junit.runners.BlockJUnit4ClassRunner.runChild(BlockJUnit4ClassRunner.java:57)
+        at org.junit.runners.ParentRunner$3.run(ParentRunner.java:290)
+        at org.junit.runners.ParentRunner$1.schedule(ParentRunner.java:71)
+        at org.junit.runners.ParentRunner.runChildren(ParentRunner.java:288)
+        at org.junit.runners.ParentRunner.access$000(ParentRunner.java:58)
+        at org.junit.runners.ParentRunner$2.evaluate(ParentRunner.java:268)
+        at org.junit.internal.runners.statements.RunBefores.evaluate(RunBefores.java:26)
+        at org.junit.internal.runners.statements.RunAfters.evaluate(RunAfters.java:27)
+        at org.junit.runners.ParentRunner.run(ParentRunner.java:363)
+        at org.junit.runners.Suite.runChild(Suite.java:128)
+        at org.junit.runners.Suite.runChild(Suite.java:27)
+        at org.junit.runners.ParentRunner$3.run(ParentRunner.java:290)
+        at org.junit.runners.ParentRunner$1.schedule(ParentRunner.java:71)
+        at org.junit.runners.ParentRunner.runChildren(ParentRunner.java:288)
+        at org.junit.runners.ParentRunner.access$000(ParentRunner.java:58)
+        at org.junit.runners.ParentRunner$2.evaluate(ParentRunner.java:268)
+        at org.junit.runners.ParentRunner.run(ParentRunner.java:363)
+        at org.junit.runner.JUnitCore.run(JUnitCore.java:137)
+        at org.junit.runner.JUnitCore.run(JUnitCore.java:115)
+        at org.junit.runner.JUnitCore.runMain(JUnitCore.java:77)
+        at org.junit.runner.JUnitCore.main(JUnitCore.java:36)
+
+##################################
+## ADDED IMPLEMENTATION
+##################################
+
+
+##################################
+## JAVA PROJECT
+##################################
+
+Found files:
+- com/acertainbookstore/business/Book.java
+- com/acertainbookstore/business/BookCopy.java
+- com/acertainbookstore/business/BookEditorPick.java
+- com/acertainbookstore/business/BookRating.java
+- com/acertainbookstore/business/BookStoreBook.java
+- com/acertainbookstore/business/CertainBookStore.java
+- com/acertainbookstore/business/ImmutableBook.java
+- com/acertainbookstore/business/ImmutableStockBook.java
+- com/acertainbookstore/business/StockBook.java
+- com/acertainbookstore/client/BookStoreClientConstants.java
+- com/acertainbookstore/client/BookStoreHTTPProxy.java
+- com/acertainbookstore/client/StockManagerHTTPProxy.java
+- com/acertainbookstore/client/tests/BookStoreTest.java
+- com/acertainbookstore/client/tests/StockManagerTest.java
+- com/acertainbookstore/interfaces/BookStore.java
+- com/acertainbookstore/interfaces/BookStoreSerializer.java
+- com/acertainbookstore/interfaces/StockManager.java
+- com/acertainbookstore/server/BookStoreHTTPMessageHandler.java
+- com/acertainbookstore/server/BookStoreHTTPServer.java
+- com/acertainbookstore/server/BookStoreHTTPServerUtility.java
+- com/acertainbookstore/utils/BookStoreConstants.java
+- com/acertainbookstore/utils/BookStoreException.java
+- com/acertainbookstore/utils/BookStoreKryoSerializer.java
+- com/acertainbookstore/utils/BookStoreMessageTag.java
+- com/acertainbookstore/utils/BookStoreRequest.java
+- com/acertainbookstore/utils/BookStoreResponse.java
+- com/acertainbookstore/utils/BookStoreUtility.java
+
+
+## File Structure (Matched Files)
+└── com
+    └── acertainbookstore
+        ├── business
+        │   ├── Book.java
+        │   ├── BookCopy.java
+        │   ├── BookEditorPick.java
+        │   ├── BookRating.java
+        │   ├── BookStoreBook.java
+        │   ├── CertainBookStore.java
+        │   ├── ImmutableBook.java
+        │   ├── ImmutableStockBook.java
+        │   └── StockBook.java
+        ├── client
+        │   ├── BookStoreClientConstants.java
+        │   ├── BookStoreHTTPProxy.java
+        │   ├── StockManagerHTTPProxy.java
+        │   └── tests
+        │       ├── BookStoreTest.java
+        │       └── StockManagerTest.java
+        ├── interfaces
+        │   ├── BookStore.java
+        │   ├── BookStoreSerializer.java
+        │   └── StockManager.java
+        ├── server
+        │   ├── BookStoreHTTPMessageHandler.java
+        │   ├── BookStoreHTTPServer.java
+        │   └── BookStoreHTTPServerUtility.java
+        └── utils
+            ├── BookStoreConstants.java
+            ├── BookStoreException.java
+            ├── BookStoreKryoSerializer.java
+            ├── BookStoreMessageTag.java
+            ├── BookStoreRequest.java
+            ├── BookStoreResponse.java
+            └── BookStoreUtility.java
+
+## com/acertainbookstore/business/Book.java
+package com.acertainbookstore.business;
+
+/**
+ * {@link Book} implements the book data-structure that a bookstore client works
+ * with.
+ */
+public interface Book {
+
+	/**
+	 * Gets the ISBN of the {@link Book}.
+	 *
+	 * @return the ISBN
+	 */
+	public int getISBN();
+
+	/**
+	 * Gets the title of the {@link Book}.
+	 *
+	 * @return the title
+	 */
+	public String getTitle();
+
+	/**
+	 * Gets the author of the {@link Book}.
+	 *
+	 * @return the author
+	 */
+	public String getAuthor();
+
+	/**
+	 * Gets the price of the {@link Book}.
+	 *
+	 * @return the price
+	 */
+	public float getPrice();
+}
+
+
+## com/acertainbookstore/business/BookCopy.java
+package com.acertainbookstore.business;
+
+/**
+ * {@link BookCopy} is used to represent the book and its number of copies.
+ */
+public class BookCopy {
+
+	/** The ISBN. */
+	private int isbn;
+
+	/** The number of copies. */
+	private int numCopies;
+
+	/**
+	 * Instantiates a new {@link BookCopy} with <code>numCopies</code> book
+	 * copies of <code>ISBN</code>.
+	 *
+	 * @param isbn
+	 *            the ISBN
+	 * @param numCopies
+	 *            the number of copies
+	 */
+	public BookCopy(int isbn, int numCopies) {
+		this.setISBN(isbn);
+		this.setNumCopies(numCopies);
+	}
+
+	/**
+	 * Gets the ISBN of the book.
+	 *
+	 * @return the ISBN
+	 */
+	public int getISBN() {
+		return isbn;
+	}
+
+	/**
+	 * Gets the number of book copies.
+	 *
+	 * @return the number of copies
+	 */
+	public int getNumCopies() {
+		return numCopies;
+	}
+
+	/**
+	 * Sets the ISBN of the book.
+	 *
+	 * @param isbn
+	 *            the new ISBN
+	 */
+	public void setISBN(int isbn) {
+		this.isbn = isbn;
+	}
+
+	/**
+	 * Sets the number of book copies.
+	 *
+	 * @param numCopies
+	 *            the new number of copies
+	 */
+	public void setNumCopies(int numCopies) {
+		this.numCopies = numCopies;
+	}
+
+	/*
+	 * (non-Javadoc)
+	 *
+	 * @see java.lang.Object#equals(java.lang.Object)
+	 */
+	@Override
+	public boolean equals(Object obj) {
+		if (obj == null || getClass() != obj.getClass()) {
+			return false;
+		}
+
+		return this.getISBN() == ((BookCopy) obj).getISBN();
+	}
+
+	/*
+	 * (non-Javadoc)
+	 *
+	 * @see java.lang.Object#hashCode()
+	 */
+	@Override
+	public int hashCode() {
+		return getISBN();
+	}
+}
+
+
+## com/acertainbookstore/business/BookEditorPick.java
+package com.acertainbookstore.business;
+
+/**
+ * {@link BookEditorPick} is used to represent the book with its editor picked
+ * status.
+ */
+public class BookEditorPick {
+
+	/** The ISBN. */
+	private int isbn;
+
+	/** Whether the book is editor picked. */
+	private boolean editorPick;
+
+	/**
+	 * Instantiates a new {@link BookEditorPick} with the
+	 * <code>editorPick</code> status and <code>ISBN</code>.
+	 *
+	 * @param isbn
+	 *            the ISBN
+	 * @param editorPick
+	 *            whether the book is editor picked
+	 */
+	public BookEditorPick(int isbn, boolean editorPick) {
+		this.setISBN(isbn);
+		this.setEditorPick(editorPick);
+	}
+
+	/**
+	 * Gets the ISBN.
+	 *
+	 * @return the ISBN
+	 */
+	public int getISBN() {
+		return isbn;
+	}
+
+	/**
+	 * Sets the ISBN.
+	 *
+	 * @param isbn
+	 *            the new ISBN
+	 */
+	public void setISBN(int isbn) {
+		this.isbn = isbn;
+	}
+
+	/**
+	 * Checks whether the book is editor picked.
+	 *
+	 * @return true, if the book is editor picked
+	 */
+	public boolean isEditorPick() {
+		return editorPick;
+	}
+
+	/**
+	 * Sets whether the book is editor picked.
+	 *
+	 * @param editorPick
+	 *            whether the book is editor picked
+	 */
+	public void setEditorPick(boolean editorPick) {
+		this.editorPick = editorPick;
+	}
+
+	/*
+	 * (non-Javadoc)
+	 *
+	 * @see java.lang.Object#equals(java.lang.Object)
+	 */
+	@Override
+	public boolean equals(Object obj) {
+		if (obj == null || getClass() != obj.getClass()) {
+			return false;
+		}
+
+		return this.getISBN() == ((BookEditorPick) obj).getISBN();
+	}
+
+	/*
+	 * (non-Javadoc)
+	 *
+	 * @see java.lang.Object#hashCode()
+	 */
+	@Override
+	public int hashCode() {
+		return getISBN();
+	}
+}
+
+
+## com/acertainbookstore/business/BookRating.java
+package com.acertainbookstore.business;
+
+/**
+ * {@link BookRating} is used to represent the book with its rating.
+ */
+public class BookRating {
+
+	/** The ISBN. */
+	private int isbn;
+
+	/** The rating. */
+	private int rating;
+
+	/**
+	 * Instantiates a new {@link BookRating} representing the
+	 * <code>rating</code> of the book with the given <code>ISBN</code>.
+	 *
+	 * @param isbn
+	 *            the ISBN
+	 * @param rating
+	 *            the rating
+	 */
+	public BookRating(int isbn, int rating) {
+		this.setISBN(isbn);
+		this.setRating(rating);
+	}
+
+	/**
+	 * Gets the ISBN of the book.
+	 *
+	 * @return the ISBN
+	 */
+	public int getISBN() {
+		return isbn;
+	}
+
+	/**
+	 * Sets the ISBN of the book.
+	 *
+	 * @param iSBN
+	 *            the new ISBN
+	 */
+	public void setISBN(int isbn) {
+		this.isbn = isbn;
+	}
+
+	/**
+	 * Gets the rating of the book.
+	 *
+	 * @return the rating
+	 */
+	public int getRating() {
+		return rating;
+	}
+
+	/**
+	 * Sets the rating of the book.
+	 *
+	 * @param rating
+	 *            the new rating
+	 */
+	public void setRating(int rating) {
+		this.rating = rating;
+	}
+
+	/*
+	 * (non-Javadoc)
+	 *
+	 * @see java.lang.Object#equals(java.lang.Object)
+	 */
+	@Override
+	public boolean equals(Object obj) {
+		if (obj == null || getClass() != obj.getClass()) {
+			return false;
+		}
+
+		return this.getISBN() == ((BookRating) obj).getISBN();
+	}
+
+	/*
+	 * (non-Javadoc)
+	 *
+	 * @see java.lang.Object#hashCode()
+	 */
+	@Override
+	public int hashCode() {
+		return getISBN();
+	}
+}
+
+
+## com/acertainbookstore/business/BookStoreBook.java
+package com.acertainbookstore.business;
+
+import com.acertainbookstore.utils.BookStoreUtility;
+
+/**
+ * {@link BookStoreBook} implements all parts of the book. Only parts of it are
+ * available in the bookstore client and stock manager, cf. the {@link Book} and
+ * {@link StockBook} interfaces.
+ *
+ * @see Book
+ * @see StockBook
+ * @see ImmutableBook
+ */
+public class BookStoreBook extends ImmutableBook {
+
+	/** The number of copies. */
+	private int numCopies;
+
+	/** The total rating. */
+	private long totalRating;
+
+	/** The number of times rated. */
+	private long numTimesRated;
+
+	/** The number of sale misses. */
+	private long numSaleMisses;
+
+	/** Whether the book is editor picked. */
+	private boolean editorPick;
+
+	/**
+	 * Instantiates a new {@link BookStoreBook}.
+	 *
+	 * @param isbn
+	 *            the ISBN
+	 * @param title
+	 *            the title
+	 * @param author
+	 *            the author
+	 * @param price
+	 *            the price
+	 * @param numCopies
+	 *            the number of copies
+	 */
+	public BookStoreBook(int isbn, String title, String author, float price, int numCopies) {
+		super(isbn, title, author, price);
+
+		this.setNumSaleMisses(0);
+		this.setNumTimesRated(0);
+		this.setNumCopies(numCopies);
+		this.setTotalRating(0);
+		this.setEditorPick(false);
+	}
+
+	/**
+	 * Instantiates a new {@link BookStoreBook} from a {@link StockBook}
+	 * instance.
+	 *
+	 * @param bookToCopy
+	 *            the book to copy
+	 */
+	public BookStoreBook(StockBook bookToCopy) {
+		super(bookToCopy.getISBN(), bookToCopy.getTitle(), bookToCopy.getAuthor(), bookToCopy.getPrice());
+
+		this.setNumSaleMisses(bookToCopy.getNumSaleMisses());
+		this.setNumTimesRated(bookToCopy.getNumTimesRated());
+		this.setNumCopies(bookToCopy.getNumCopies());
+		this.setTotalRating(bookToCopy.getTotalRating());
+		this.setEditorPick(bookToCopy.isEditorPick());
+	}
+
+	/**
+	 * Gets the total rating.
+	 *
+	 * @return the total rating
+	 */
+	public long getTotalRating() {
+		return totalRating;
+	}
+
+	/**
+	 * Gets the number of times rated.
+	 *
+	 * @return the number of times rated
+	 */
+	public long getNumTimesRated() {
+		return numTimesRated;
+	}
+
+	/**
+	 * Gets the number of copies.
+	 *
+	 * @return the number of copies
+	 */
+	public int getNumCopies() {
+		return numCopies;
+	}
+
+	/**
+	 * Gets the number of sale misses.
+	 *
+	 * @return the number of sale misses
+	 */
+	public long getNumSaleMisses() {
+		return numSaleMisses;
+	}
+
+	/**
+	 * Gets the average rating.
+	 *
+	 * @return the average rating
+	 */
+	public float getAverageRating() {
+		return (numTimesRated == 0 ? -1.0f : (float) totalRating / numTimesRated);
+	}
+
+	/**
+	 * Checks if the book is editor picked.
+	 *
+	 * @return true, if it is editor picked
+	 */
+	public boolean isEditorPick() {
+		return editorPick;
+	}
+
+	/**
+	 * Sets the total rating of the book.
+	 *
+	 * @param totalRating
+	 *            the new total rating
+	 */
+	private void setTotalRating(long totalRating) {
+		this.totalRating = totalRating;
+	}
+
+	/**
+	 * Sets the number of times that the book was rated.
+	 *
+	 * @param numTimesRated
+	 *            the new number of times rated
+	 */
+	private void setNumTimesRated(long numTimesRated) {
+		this.numTimesRated = numTimesRated;
+	}
+
+	/**
+	 * Sets the number of copies of a book in stock.
+	 *
+	 * @param numCopies
+	 *            the new number of copies
+	 */
+	private void setNumCopies(int numCopies) {
+		this.numCopies = numCopies;
+	}
+
+	/**
+	 * Sets the number of times that a client wanted to buy a book when it was
+	 * not in stock, also known as the number of sale misses.
+	 *
+	 * @param saleMisses
+	 *            the new sale misses
+	 */
+	private void setNumSaleMisses(long numSaleMisses) {
+		this.numSaleMisses = numSaleMisses;
+	}
+
+	/**
+	 * Sets the book to be an editor pick if <code>editorPick</code> is true,
+	 * otherwise the book is not an editor pick.
+	 *
+	 * @param editorPick
+	 *            the new editor pick
+	 */
+	public void setEditorPick(boolean editorPick) {
+		this.editorPick = editorPick;
+	}
+
+	/**
+	 * Checks if at least <code>numCopies</code> of the book are available.
+	 *
+	 * @param numCopies
+	 *            the number of copies
+	 * @return true, if successful
+	 */
+	public boolean areCopiesInStore(int numCopies) {
+		return this.numCopies >= numCopies;
+	}
+
+	/**
+	 * Reduces the number of copies of the books.
+	 *
+	 * @param numCopies
+	 *            the number of copies
+	 * @return true, if successful
+	 */
+	public boolean buyCopies(int numCopies) {
+		if (!BookStoreUtility.isInvalidNoCopies(numCopies) && areCopiesInStore(numCopies)) {
+			this.numCopies -= numCopies;
+			return true;
+		}
+
+		return false;
+	}
+
+	/**
+	 * Adds <code>newCopies</code> to the total number of copies of the book.
+	 *
+	 * @param numNewCopies
+	 *            the number of new copies
+	 */
+	public void addCopies(int numNewCopies) {
+		if (!BookStoreUtility.isInvalidNoCopies(numNewCopies)) {
+			this.numCopies += numNewCopies;
+			this.numSaleMisses = 0;
+		}
+	}
+
+	/**
+	 * Increments the amount of missed sales of the book.
+	 *
+	 * @param numSaleMisses
+	 *            the number of sales misses encountered
+	 */
+	public void addSaleMiss(int numSaleMisses) {
+		this.numSaleMisses += numSaleMisses;
+	}
+
+	/**
+	 * Adds the rating to the total rating of the book.
+	 *
+	 * @param rating
+	 *            the rating
+	 */
+	public void addRating(int rating) {
+		if (!BookStoreUtility.isInvalidRating(rating)) {
+			this.totalRating += rating;
+			this.numTimesRated++;
+		}
+	}
+
+	/**
+	 * Checks if someone tried to buy the book, while the book was not in stock,
+	 * also known as having sale misses.
+	 *
+	 * @return true, if successful
+	 */
+	public boolean hadSaleMiss() {
+		return this.numSaleMisses > 0;
+	}
+
+	/**
+	 * Returns a string representation of the book.
+	 *
+	 * @return the string
+	 */
+	@Override
+	public String toString() {
+		return "ISBN = " + this.getISBN() + ", Title = " + this.getTitle() + ", Author = " + this.getAuthor()
+				+ ", Price = " + this.getPrice();
+	}
+
+	/**
+	 * Returns a {@link ImmutableBook} copy of the book.
+	 *
+	 * @return the immutable book
+	 */
+	public ImmutableBook immutableBook() {
+		return new ImmutableBook(this.getISBN(), new String(this.getTitle()), new String(this.getAuthor()),
+				this.getPrice());
+	}
+
+	/**
+	 * Returns a {@link StockBook} copy of the book.
+	 *
+	 * @return the stock book
+	 */
+	public StockBook immutableStockBook() {
+		return new ImmutableStockBook(this.getISBN(), new String(this.getTitle()), new String(this.getAuthor()),
+				this.getPrice(), this.numCopies, this.numSaleMisses, this.numTimesRated, this.totalRating,
+				this.editorPick);
+	}
+
+	/**
+	 * Returns a {@link BookStoreBook} copy of the book.
+	 *
+	 * @return the book store book
+	 */
+	public BookStoreBook copy() {
+		return new BookStoreBook(this.getISBN(), new String(this.getTitle()), new String(this.getAuthor()),
+				this.getPrice(), this.numCopies);
+	}
+}
+
+
+## com/acertainbookstore/business/CertainBookStore.java
+package com.acertainbookstore.business;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Random;
+import java.util.Set;
+import java.util.stream.Collector;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+import com.acertainbookstore.interfaces.BookStore;
+import com.acertainbookstore.interfaces.StockManager;
+import com.acertainbookstore.utils.BookStoreConstants;
+import com.acertainbookstore.utils.BookStoreException;
+import com.acertainbookstore.utils.BookStoreUtility;
+
+/**
+ * {@link CertainBookStore} implements the {@link BookStore} and
+ * {@link StockManager} functionalities.
+ *
+ * @see BookStore
+ * @see StockManager
+ */
+public class CertainBookStore implements BookStore, StockManager {
+
+	/** The mapping of books from ISBN to {@link BookStoreBook}. */
+	private Map<Integer, BookStoreBook> bookMap = null;
+
+	/**
+	 * Instantiates a new {@link CertainBookStore}.
+	 */
+	public CertainBookStore() {
+
+		// Constructors are not synchronized
+		bookMap = new HashMap<>();
+	}
+
+	private synchronized void validate(StockBook book) throws BookStoreException {
+		int isbn = book.getISBN();
+		String bookTitle = book.getTitle();
+		String bookAuthor = book.getAuthor();
+		int noCopies = book.getNumCopies();
+		float bookPrice = book.getPrice();
+
+		if (BookStoreUtility.isInvalidISBN(isbn)) { // Check if the book has valid ISBN
+			throw new BookStoreException(BookStoreConstants.ISBN + isbn + BookStoreConstants.INVALID);
+		}
+
+		if (BookStoreUtility.isEmpty(bookTitle)) { // Check if the book has valid title
+			throw new BookStoreException(BookStoreConstants.BOOK + book.toString() + BookStoreConstants.INVALID);
+		}
+
+		if (BookStoreUtility.isEmpty(bookAuthor)) { // Check if the book has valid author
+			throw new BookStoreException(BookStoreConstants.BOOK + book.toString() + BookStoreConstants.INVALID);
+		}
+
+		if (BookStoreUtility.isInvalidNoCopies(noCopies)) { // Check if the book has at least one copy
+			throw new BookStoreException(BookStoreConstants.BOOK + book.toString() + BookStoreConstants.INVALID);
+		}
+
+		if (bookPrice < 0.0) { // Check if the price of the book is valid
+			throw new BookStoreException(BookStoreConstants.BOOK + book.toString() + BookStoreConstants.INVALID);
+		}
+
+		if (bookMap.containsKey(isbn)) {// Check if the book is not in stock
+			throw new BookStoreException(BookStoreConstants.ISBN + isbn + BookStoreConstants.DUPLICATED);
+		}
+	}
+
+	private synchronized void validate(BookCopy bookCopy) throws BookStoreException {
+		int isbn = bookCopy.getISBN();
+		int numCopies = bookCopy.getNumCopies();
+
+		validateISBNInStock(isbn); // Check if the book has valid ISBN and in stock
+
+		if (BookStoreUtility.isInvalidNoCopies(numCopies)) { // Check if the number of the book copy is larger than zero
+			throw new BookStoreException(BookStoreConstants.NUM_COPIES + numCopies + BookStoreConstants.INVALID);
+		}
+	}
+
+	private synchronized void validate(BookEditorPick editorPickArg) throws BookStoreException {
+		int isbn = editorPickArg.getISBN();
+		validateISBNInStock(isbn); // Check if the book has valid ISBN and in stock
+	}
+
+	private synchronized void validateISBNInStock(Integer ISBN) throws BookStoreException {
+		if (BookStoreUtility.isInvalidISBN(ISBN)) { // Check if the book has valid ISBN
+			throw new BookStoreException(BookStoreConstants.ISBN + ISBN + BookStoreConstants.INVALID);
+		}
+		if (!bookMap.containsKey(ISBN)) {// Check if the book is in stock
+			throw new BookStoreException(BookStoreConstants.ISBN + ISBN + BookStoreConstants.NOT_AVAILABLE);
+		}
+	}
+
+	/*
+	 * (non-Javadoc)
+	 *
+	 * @see com.acertainbookstore.interfaces.StockManager#addBooks(java.util.Set)
+	 */
+	public synchronized void addBooks(Set<StockBook> bookSet) throws BookStoreException {
+		if (bookSet == null) {
+			throw new BookStoreException(BookStoreConstants.NULL_INPUT);
+		}
+
+		// Check that all books are there first.
+		for (StockBook book : bookSet) {
+			validate(book);
+		}
+
+		// Then add these books to the store.
+		for (StockBook book : bookSet) {
+			int isbn = book.getISBN();
+			bookMap.put(isbn, new BookStoreBook(book));
+		}
+
+	}
+
+	/*
+	 * (non-Javadoc)
+	 *
+	 * @see com.acertainbookstore.interfaces.StockManager#addCopies(java.util.Set)
+	 */
+	public synchronized void addCopies(Set<BookCopy> bookCopiesSet) throws BookStoreException {
+		int isbn;
+		int numCopies;
+
+		if (bookCopiesSet == null) {
+			throw new BookStoreException(BookStoreConstants.NULL_INPUT);
+		}
+
+		// Check that all books are there first.
+		for (BookCopy bookCopy : bookCopiesSet) {
+			validate(bookCopy);
+		}
+
+		BookStoreBook book;
+
+		// Then update the number of copies.
+		for (BookCopy bookCopy : bookCopiesSet) {
+			isbn = bookCopy.getISBN();
+			numCopies = bookCopy.getNumCopies();
+			book = bookMap.get(isbn);
+			book.addCopies(numCopies);
+		}
+
+	}
+
+	/*
+	 * (non-Javadoc)
+	 *
+	 * @see com.acertainbookstore.interfaces.StockManager#getBooks()
+	 */
+	public synchronized List<StockBook> getBooks() {
+		Collection<BookStoreBook> bookMapValues = bookMap.values();
+
+		return bookMapValues.stream().map(book -> book.immutableStockBook()).collect(Collectors.toList());
+	}
+
+	/*
+	 * (non-Javadoc)
+	 *
+	 * @see
+	 * com.acertainbookstore.interfaces.StockManager#updateEditorPicks(java.util
+	 * .Set)
+	 */
+	public synchronized void updateEditorPicks(Set<BookEditorPick> editorPicks) throws BookStoreException {
+
+		if (editorPicks == null) {
+			throw new BookStoreException(BookStoreConstants.NULL_INPUT);
+		}
+
+		// Check that all books are there first.
+		for (BookEditorPick editorPickArg : editorPicks) {
+			validate(editorPickArg);
+		}
+
+		// Then set the editor pick.
+		for (BookEditorPick editorPickArg : editorPicks) {
+			bookMap.get(editorPickArg.getISBN()).setEditorPick(editorPickArg.isEditorPick());
+		}
+	}
+
+	/*
+	 * (non-Javadoc)
+	 *
+	 * @see com.acertainbookstore.interfaces.BookStore#buyBooks(java.util.Set)
+	 */
+	public synchronized void buyBooks(Set<BookCopy> bookCopiesToBuy) throws BookStoreException {
+		if (bookCopiesToBuy == null) {
+			throw new BookStoreException(BookStoreConstants.NULL_INPUT);
+		}
+
+		int isbn;
+		BookStoreBook book;
+		Boolean saleMiss = false;
+
+		Map<Integer, Integer> salesMisses = new HashMap<>();
+
+		for (BookCopy bookCopyToBuy : bookCopiesToBuy) {
+			// Check whether the book is in stock.
+			validate(bookCopyToBuy);
+			isbn = bookCopyToBuy.getISBN();
+
+			book = bookMap.get(isbn);
+			// Check whether the number of book copy is enough for the request.
+			if (!book.areCopiesInStore(bookCopyToBuy.getNumCopies())) {
+				// If we cannot sell the copies of the book, it is a miss.
+				salesMisses.put(isbn, bookCopyToBuy.getNumCopies() - book.getNumCopies());
+				saleMiss = true;
+			}
+		}
+
+		// We throw exception now since we want to see how many books in the
+		// order incurred misses which is used by books in demand.
+		if (saleMiss) {
+			for (Map.Entry<Integer, Integer> saleMissEntry : salesMisses.entrySet()) {
+				book = bookMap.get(saleMissEntry.getKey());
+				book.addSaleMiss(saleMissEntry.getValue());
+			}
+			throw new BookStoreException(BookStoreConstants.BOOK + BookStoreConstants.NOT_AVAILABLE);
+		}
+
+		// Then make the purchase.
+		for (BookCopy bookCopyToBuy : bookCopiesToBuy) {
+			book = bookMap.get(bookCopyToBuy.getISBN());
+			book.buyCopies(bookCopyToBuy.getNumCopies());
+		}
+	}
+
+	/*
+	 * (non-Javadoc)
+	 *
+	 * @see com.acertainbookstore.interfaces.StockManager#getBooksByISBN(java.util.
+	 * Set)
+	 */
+	public synchronized List<StockBook> getBooksByISBN(Set<Integer> isbnSet) throws BookStoreException {
+		if (isbnSet == null) {
+			throw new BookStoreException(BookStoreConstants.NULL_INPUT);
+		}
+
+		for (Integer ISBN : isbnSet) {
+			validateISBNInStock(ISBN);
+		}
+
+		// Return the set of books matching isbns in the validated set.
+		return isbnSet.stream().map(isbn -> bookMap.get(isbn).immutableStockBook()).collect(Collectors.toList());
+	}
+
+	/*
+	 * (non-Javadoc)
+	 *
+	 * @see com.acertainbookstore.interfaces.BookStore#getBooks(java.util.Set)
+	 */
+	public synchronized List<Book> getBooks(Set<Integer> isbnSet) throws BookStoreException {
+		if (isbnSet == null) {
+			throw new BookStoreException(BookStoreConstants.NULL_INPUT);
+		}
+
+		// Check that all ISBNs that we rate are there to start with.
+		for (Integer ISBN : isbnSet) {
+			validateISBNInStock(ISBN);
+		}
+
+		return isbnSet.stream().map(isbn -> bookMap.get(isbn).immutableBook()).collect(Collectors.toList());
+	}
+
+	/*
+	 * (non-Javadoc)
+	 *
+	 * @see com.acertainbookstore.interfaces.BookStore#getEditorPicks(int)
+	 */
+	public synchronized List<Book> getEditorPicks(int numBooks) throws BookStoreException {
+		if (numBooks < 0) {
+			throw new BookStoreException("numBooks = " + numBooks + ", but it must be positive");
+		}
+
+		// Get all books that are editor picks.
+		List<BookStoreBook> listAllEditorPicks = bookMap.entrySet().stream().map(pair -> pair.getValue())
+				.filter(book -> book.isEditorPick()).collect(Collectors.toList());
+
+		// Find numBooks random indices of books that will be picked.
+		Random rand = new Random();
+		Set<Integer> tobePicked = new HashSet<>();
+		int rangePicks = listAllEditorPicks.size();
+
+		if (rangePicks <= numBooks) {
+
+			// We need to add all books.
+			for (int i = 0; i < listAllEditorPicks.size(); i++) {
+				tobePicked.add(i);
+			}
+		} else {
+
+			// We need to pick randomly the books that need to be returned.
+			int randNum;
+
+			while (tobePicked.size() < numBooks) {
+				randNum = rand.nextInt(rangePicks);
+				tobePicked.add(randNum);
+			}
+		}
+
+		// Return all the books by the randomly chosen indices.
+		return tobePicked.stream().map(index -> listAllEditorPicks.get(index).immutableBook())
+				.collect(Collectors.toList());
+	}
+
+	/*
+	 * (non-Javadoc)
+	 *
+	 * @see com.acertainbookstore.interfaces.BookStore#getTopRatedBooks(int)
+	 */
+	@Override
+	public synchronized List<Book> getTopRatedBooks(int numBooks) throws BookStoreException {
+		if (numBooks < 0) {
+			throw new BookStoreException(BookStoreConstants.BOOK_NUM_PARAM + " is: " + numBooks + " (must be a positive number.");
+		}
+
+		List<Book> topRated = bookMap.values().stream()
+								.filter(book -> book.getNumTimesRated() > 0)
+								.sorted(Comparator.comparing((BookStoreBook book) -> book.getAverageRating()).reversed())
+								.limit(numBooks)
+								.map(book -> book.immutableBook())
+								.collect(Collectors.toList());
+
+		return topRated;
+	}
+
+	/*
+	 * (non-Javadoc)
+	 *
+	 * @see com.acertainbookstore.interfaces.StockManager#getBooksInDemand()
+	 */
+	@Override
+	public synchronized List<StockBook> getBooksInDemand() throws BookStoreException {
+		List<StockBook> inDemand = bookMap.values().stream()
+									.filter(book -> book.hadSaleMiss())
+									.map(book -> book.immutableStockBook())
+									.collect(Collectors.toList());
+
+		return inDemand;
+	}
+
+	/*
+	 * (non-Javadoc)
+	 *
+	 * @see com.acertainbookstore.interfaces.BookStore#rateBooks(java.util.Set)
+	 */
+	@Override
+	public synchronized void rateBooks(Set<BookRating> bookRating) throws BookStoreException {
+		if (bookRating == null) {
+			throw new BookStoreException(BookStoreConstants.NULL_INPUT);
+		}
+
+		if (bookRating.isEmpty()) {
+			throw new BookStoreException(BookStoreConstants.EMPTY);
+		}
+
+		BookStoreBook book;
+		int isbn;
+		int value;
+
+		// Validation phase
+		for (BookRating rating : bookRating) {
+			if (rating == null) {
+				throw new BookStoreException(BookStoreConstants.NULL_INPUT);
+			}
+
+			isbn = rating.getISBN();
+			value = rating.getRating();
+
+			// validate isbn and that book are nn store
+			validateISBNInStock(isbn);
+
+			// validate rating
+			if (value < 0 || value > 5) {
+				throw new BookStoreException(BookStoreConstants.RATING + value + " is not a valid book rating (0-5).");
+			}
+		}
+
+		// rating phase
+		for (BookRating rating :  bookRating) {
+			isbn = rating.getISBN();
+			value = rating.getRating();
+			book = bookMap.get(isbn);
+
+			book.addRating(value);
+		}
+	}
+
+	/*
+	 * (non-Javadoc)
+	 *
+	 * @see com.acertainbookstore.interfaces.StockManager#removeAllBooks()
+	 */
+	public synchronized void removeAllBooks() throws BookStoreException {
+		bookMap.clear();
+	}
+
+	/*
+	 * (non-Javadoc)
+	 *
+	 * @see com.acertainbookstore.interfaces.StockManager#removeBooks(java.util.Set)
+	 */
+	public synchronized void removeBooks(Set<Integer> isbnSet) throws BookStoreException {
+		if (isbnSet == null) {
+			throw new BookStoreException(BookStoreConstants.NULL_INPUT);
+		}
+
+		for (Integer ISBN : isbnSet) {
+			if (BookStoreUtility.isInvalidISBN(ISBN)) {
+				throw new BookStoreException(BookStoreConstants.ISBN + ISBN + BookStoreConstants.INVALID);
+			}
+
+			if (!bookMap.containsKey(ISBN)) {
+				throw new BookStoreException(BookStoreConstants.ISBN + ISBN + BookStoreConstants.NOT_AVAILABLE);
+			}
+		}
+
+		for (int isbn : isbnSet) {
+			bookMap.remove(isbn);
+		}
+	}
+}
+
+
+## com/acertainbookstore/business/ImmutableBook.java
+package com.acertainbookstore.business;
+
+import com.acertainbookstore.utils.BookStoreConstants;
+
+/**
+ * {@link ImmutableBook} is the object that gets sent back to the bookstore
+ * client as a {@link Book}. We do not allow the bookstore client to make any
+ * changes to this data structure.
+ *
+ * @see Book
+ */
+public class ImmutableBook implements Book {
+
+	/** The ISBN. */
+	private final int isbn;
+
+	/** The title. */
+	private final String title;
+
+	/** The author. */
+	private final String author;
+
+	/** The price. */
+	private final float price;
+
+	/**
+	 * Instantiates a new {@link ImmutableBook}. This constructor is necessary
+	 * for serialization and has no other purpose.
+	 */
+	public ImmutableBook() {
+		this.isbn = 0;
+		this.title = "";
+		this.author = "";
+		this.price = 0;
+	}
+
+	/**
+	 * Instantiates a new {@link ImmutableBook}.
+	 *
+	 * @param isbn
+	 *            the ISBN
+	 * @param title
+	 *            the title
+	 * @param author
+	 *            the author
+	 * @param price
+	 *            the price
+	 */
+	public ImmutableBook(int isbn, String title, String author, float price) {
+		this.isbn = isbn;
+		this.title = title;
+		this.author = author;
+		this.price = price;
+	}
+
+	/*
+	 * (non-Javadoc)
+	 *
+	 * @see com.acertainbookstore.business.Book#getISBN()
+	 */
+	public int getISBN() {
+		return isbn;
+	}
+
+	/*
+	 * (non-Javadoc)
+	 *
+	 * @see com.acertainbookstore.business.Book#getTitle()
+	 */
+	public String getTitle() {
+		return title;
+	}
+
+	/*
+	 * (non-Javadoc)
+	 *
+	 * @see com.acertainbookstore.business.Book#getAuthor()
+	 */
+	public String getAuthor() {
+		return author;
+	}
+
+	/*
+	 * (non-Javadoc)
+	 *
+	 * @see com.acertainbookstore.business.Book#getPrice()
+	 */
+	public float getPrice() {
+		return price;
+	}
+
+	/*
+	 * (non-Javadoc)
+	 *
+	 * @see java.lang.Object#equals(java.lang.Object)
+	 */
+	@Override
+	public boolean equals(Object obj) {
+		if (!(obj instanceof Book)) {
+			return false;
+		}
+
+		Book book = (Book) obj;
+		return this.isbn == book.getISBN() && this.getTitle().equals(book.getTitle())
+				&& this.getAuthor().equals(book.getAuthor())
+				&& Math.abs(this.getPrice() - book.getPrice()) < BookStoreConstants.EPSILON;
+	}
+
+	/*
+	 * (non-Javadoc)
+	 *
+	 * @see java.lang.Object#toString()
+	 */
+	@Override
+	public String toString() {
+		return "ISBN = " + this.getISBN() + " Title = " + this.getTitle() + " Author = " + this.getAuthor()
+				+ " Price = " + this.getPrice();
+	}
+
+	/*
+	 * (non-Javadoc)
+	 *
+	 * @see java.lang.Object#hashCode()
+	 */
+	@Override
+	public int hashCode() {
+		return getISBN();
+	}
+}
+
+
+## com/acertainbookstore/business/ImmutableStockBook.java
+package com.acertainbookstore.business;
+
+/**
+ * {@link ImmutableStockBook} gets sent back to the {@link StockManager}. We do
+ * not allow the {@link StockManager} to make any changes to the data structure.
+ *
+ * @see StockManager
+ * @see ImmutableBook
+ * @see StockBook
+ */
+public final class ImmutableStockBook extends ImmutableBook implements StockBook {
+
+	/** The total rating. */
+	private final long totalRating;
+
+	/** The number of times rated. */
+	private final long numTimesRated;
+
+	/** The number of copies. */
+	private final int numCopies;
+
+	/** The number of sale misses. */
+	private final long numSaleMisses;
+
+	/** Whether the book is editor picked. */
+	private final boolean editorPick;
+
+	/**
+	 * Instantiates a new {@link ImmutableStockBook}. This constructor is
+	 * necessary for serialization and has no other purpose.
+	 */
+	public ImmutableStockBook() {
+		this.totalRating = 0;
+		this.numTimesRated = 0;
+		this.numCopies = 0;
+		this.numSaleMisses = 0;
+		this.editorPick = false;
+	}
+
+	/**
+	 * Instantiates a new {@link ImmutableStockBook}.
+	 *
+	 * @param isbn
+	 *            the ISBN
+	 * @param title
+	 *            the title
+	 * @param author
+	 *            the author
+	 * @param price
+	 *            the price
+	 * @param numCopies
+	 *            the number of copies
+	 * @param numSaleMisses
+	 *            the number of sale misses
+	 * @param numTimesRated
+	 *            the number of times rated
+	 * @param totalRating
+	 *            the total rating
+	 * @param editorPick
+	 *            whether the book is editor picked
+	 */
+	public ImmutableStockBook(int isbn, String title, String author, float price, int numCopies, long numSaleMisses,
+			long numTimesRated, long totalRating, boolean editorPick) {
+		super(isbn, title, author, price);
+
+		this.totalRating = totalRating;
+		this.numTimesRated = numTimesRated;
+		this.numCopies = numCopies;
+		this.numSaleMisses = numSaleMisses;
+		this.editorPick = editorPick;
+	}
+
+	/*
+	 * (non-Javadoc)
+	 *
+	 * @see com.acertainbookstore.business.StockBook#getTotalRating()
+	 */
+	public long getTotalRating() {
+		return totalRating;
+	}
+
+	/*
+	 * (non-Javadoc)
+	 *
+	 * @see com.acertainbookstore.business.StockBook#getTimesRated()
+	 */
+	public long getNumTimesRated() {
+		return numTimesRated;
+	}
+
+	/*
+	 * (non-Javadoc)
+	 *
+	 * @see com.acertainbookstore.business.StockBook#getNumCopies()
+	 */
+	public int getNumCopies() {
+		return numCopies;
+	}
+
+	/*
+	 * (non-Javadoc)
+	 *
+	 * @see com.acertainbookstore.business.StockBook#getSaleMisses()
+	 */
+	public long getNumSaleMisses() {
+		return numSaleMisses;
+	}
+
+	/*
+	 * (non-Javadoc)
+	 *
+	 * @see com.acertainbookstore.business.StockBook#getAverageRating()
+	 */
+	public float getAverageRating() {
+		return (numTimesRated == 0 ? -1.0f : (float) totalRating / numTimesRated);
+	}
+
+	/*
+	 * (non-Javadoc)
+	 *
+	 * @see com.acertainbookstore.business.StockBook#isEditorPick()
+	 */
+	public boolean isEditorPick() {
+		return editorPick;
+	}
+}
+
+
+## com/acertainbookstore/business/StockBook.java
+package com.acertainbookstore.business;
+
+/**
+ * {@link StockBook} implements the {@link Book} data-structure that a
+ * {@link StockManager} works with.
+ *
+ * @see Book
+ * @see StockBook
+ * @see StockManager
+ */
+public interface StockBook extends Book {
+
+	/**
+	 * Returns to accumulated rating.
+	 *
+	 * @return the total rating
+	 */
+	public long getTotalRating();
+
+	/**
+	 * Gets the number of times a book has been rated.
+	 *
+	 * @return the times rated
+	 */
+	public long getNumTimesRated();
+
+	/**
+	 * Gets the number of book copies.
+	 *
+	 * @return the number of copies
+	 */
+	public int getNumCopies();
+
+	/**
+	 * Gets the number of times that a client wanted to buy a book when it was
+	 * not in stock.
+	 *
+	 * @return the sale misses
+	 */
+	public long getNumSaleMisses();
+
+	/**
+	 * Gets the rating of the book.
+	 *
+	 * @return the average rating
+	 */
+	public float getAverageRating();
+
+	/**
+	 * Checks if the book is editor picked.
+	 *
+	 * @return true, if it is editor picked
+	 */
+	public boolean isEditorPick();
+}
+
+
+## com/acertainbookstore/client/BookStoreClientConstants.java
+package com.acertainbookstore.client;
+
+/**
+ * {@link BookStoreClientConstants} stores the constants used by the
+ * {@link CertainBookStore} proxy and client classes.
+ *
+ * @see CertainBookStore
+ */
+public final class BookStoreClientConstants {
+
+	/** The Constant CLIENT_MAX_CONNECTION_ADDRESS. */
+	public static final int CLIENT_MAX_CONNECTION_ADDRESS = 200;
+
+	/** The Constant CLIENT_MAX_THREADSPOOL_THREADS. */
+	public static final int CLIENT_MAX_THREADSPOOL_THREADS = 250;
+
+	/** The Constant CLIENT_MAX_TIMEOUT_MILLISECS. */
+	public static final int CLIENT_MAX_TIMEOUT_MILLISECS = 30000;
+
+	/** The Constant strERR_CLIENT_REQUEST_SENDING. */
+	public static final String STR_ERR_CLIENT_REQUEST_SENDING = "ERR_CLIENT_REQUEST_SENDING";
+
+	/** The Constant strERR_CLIENT_REQUEST_EXCEPTION. */
+	public static final String STR_ERR_CLIENT_REQUEST_EXCEPTION = "ERR_CLIENT_REQUEST_EXCEPTION";
+
+	/** The Constant strERR_CLIENT_REQUEST_TIMEOUT. */
+	public static final String STR_ERR_CLIENT_REQUEST_TIMEOUT = "CLIENT_REQUEST_TIMEOUT";
+
+	/** The Constant strERR_CLIENT_RESPONSE_DECODING. */
+	public static final String STR_ERR_CLIENT_RESPONSE_DECODING = "CLIENT_RESPONSE_DECODING";
+
+	/** The Constant strERR_CLIENT_UNKNOWN. */
+	public static final String STR_ERR_CLIENT_UNKNOWN = "CLIENT_UNKNOWN";
+
+	/** The Constant strERR_CLIENT_ENCODING. */
+	public static final String STR_ERR_CLIENT_ENCODING = "CLIENT_ENCODING";
+
+	/**
+	 * Prevents the instantiation of a new {@link BookStoreClientConstants}.
+	 */
+	private BookStoreClientConstants() {
+		// Added a private constructor to hide the default one.
+	}
+}
+
+
+## com/acertainbookstore/client/BookStoreHTTPProxy.java
+package com.acertainbookstore.client;
+
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
+import java.util.List;
+import java.util.Set;
+import org.eclipse.jetty.client.HttpClient;
+import org.eclipse.jetty.util.thread.QueuedThreadPool;
+
+import com.acertainbookstore.business.Book;
+import com.acertainbookstore.business.BookCopy;
+import com.acertainbookstore.business.BookRating;
+import com.acertainbookstore.business.CertainBookStore;
+import com.acertainbookstore.interfaces.BookStore;
+import com.acertainbookstore.utils.BookStoreKryoSerializer;
+import com.acertainbookstore.interfaces.BookStoreSerializer;
+import com.acertainbookstore.utils.BookStoreConstants;
+import com.acertainbookstore.utils.BookStoreException;
+import com.acertainbookstore.utils.BookStoreMessageTag;
+import com.acertainbookstore.utils.BookStoreRequest;
+import com.acertainbookstore.utils.BookStoreResponse;
+import com.acertainbookstore.utils.BookStoreUtility;
+
+/**
+ * {@link BookStoreHTTPProxy} implements the client level synchronous
+ * {@link CertainBookStore} API declared in the {@link BookStore} class.
+ *
+ * @see BookStore
+ * @see CertainBookStore
+ */
+public class BookStoreHTTPProxy implements BookStore {
+
+	/** The client. */
+	protected HttpClient client;
+
+	/** The server address. */
+	protected String serverAddress;
+
+	/** The serializer. */
+	private static ThreadLocal<BookStoreSerializer> serializer;
+
+	/**
+	 * Initializes a new {@link BookStoreHTTPProxy}.
+	 *
+	 * @param serverAddress
+	 *            the server address
+	 * @throws Exception
+	 *             the exception
+	 */
+	public BookStoreHTTPProxy(String serverAddress) throws Exception {
+		serializer = ThreadLocal.withInitial(BookStoreKryoSerializer::new);
+
+		setServerAddress(serverAddress);
+		client = new HttpClient();
+
+		// Max concurrent connections to every address.
+		client.setMaxConnectionsPerDestination(BookStoreClientConstants.CLIENT_MAX_CONNECTION_ADDRESS);
+
+		// Max number of threads.
+		client.setExecutor(new QueuedThreadPool(BookStoreClientConstants.CLIENT_MAX_THREADSPOOL_THREADS));
+
+		// Seconds timeout; if no server reply, the request expires.
+		client.setConnectTimeout(BookStoreClientConstants.CLIENT_MAX_TIMEOUT_MILLISECS);
+
+		client.start();
+	}
+
+	/**
+	 * Gets the server address.
+	 *
+	 * @return the server address
+	 */
+	public String getServerAddress() {
+		return serverAddress;
+	}
+
+	/**
+	 * Sets the server address.
+	 *
+	 * @param serverAddress
+	 *            the new server address
+	 */
+	public void setServerAddress(String serverAddress) {
+		this.serverAddress = serverAddress;
+	}
+
+	/*
+	 * (non-Javadoc)
+	 *
+	 * @see com.acertainbookstore.interfaces.BookStore#buyBooks(java.util.Set)
+	 */
+	public void buyBooks(Set<BookCopy> isbnSet) throws BookStoreException {
+		String urlString = serverAddress + "/" + BookStoreMessageTag.BUYBOOKS;
+		BookStoreRequest bookStoreRequest = BookStoreRequest.newPostRequest(urlString, isbnSet);
+		BookStoreUtility.performHttpExchange(client, bookStoreRequest, serializer.get());
+	}
+
+	/*
+	 * (non-Javadoc)
+	 *
+	 * @see com.acertainbookstore.interfaces.BookStore#getBooks(java.util.Set)
+	 */
+	@SuppressWarnings("unchecked")
+	public List<Book> getBooks(Set<Integer> isbnSet) throws BookStoreException {
+		String urlString = serverAddress + "/" + BookStoreMessageTag.GETBOOKS;
+		BookStoreRequest bookStoreRequest = BookStoreRequest.newPostRequest(urlString, isbnSet);
+		BookStoreResponse bookStoreResponse = BookStoreUtility.performHttpExchange(client, bookStoreRequest,
+				serializer.get());
+		return (List<Book>) bookStoreResponse.getList();
+	}
+
+	/*
+	 * (non-Javadoc)
+	 *
+	 * @see com.acertainbookstore.interfaces.BookStore#getEditorPicks(int)
+	 */
+	@SuppressWarnings("unchecked")
+	public List<Book> getEditorPicks(int numBooks) throws BookStoreException {
+		String urlEncodedNumBooks = null;
+
+		urlEncodedNumBooks = URLEncoder.encode(Integer.toString(numBooks), StandardCharsets.UTF_8);
+
+		String urlString = serverAddress + "/" + BookStoreMessageTag.GETEDITORPICKS + "?"
+				+ BookStoreConstants.BOOK_NUM_PARAM + "=" + urlEncodedNumBooks;
+
+		BookStoreRequest bookStoreRequest = BookStoreRequest.newGetRequest(urlString);
+		BookStoreResponse bookStoreResponse = BookStoreUtility.performHttpExchange(client, bookStoreRequest,
+				serializer.get());
+		return (List<Book>) bookStoreResponse.getList();
+	}
+
+	/**
+	 * Stops the proxy.
+	 */
+	public void stop() {
+		try {
+			client.stop();
+		} catch (Exception ex) {
+			System.err.println(ex.getStackTrace());
+		}
+	}
+
+	/*
+	 * (non-Javadoc)
+	 *
+	 * @see com.acertainbookstore.interfaces.BookStore#rateBooks(java.util.Set)
+	 */
+	@Override
+	public void rateBooks(Set<BookRating> bookRating) throws BookStoreException {
+		String urlString = serverAddress + "/" + BookStoreMessageTag.RATEBOOKS;
+		BookStoreRequest bookStoreRequest = BookStoreRequest.newPostRequest(urlString, bookRating);
+		BookStoreUtility.performHttpExchange(client, bookStoreRequest, serializer.get());
+	}
+
+	/*
+	 * (non-Javadoc)
+	 *
+	 * @see com.acertainbookstore.interfaces.BookStore#getTopRatedBooks(int)
+	 */
+	@Override
+	@SuppressWarnings("unchecked")
+	public List<Book> getTopRatedBooks(int numBooks) throws BookStoreException {
+		String urlEncodedNumBooks = null;
+
+		urlEncodedNumBooks = URLEncoder.encode(Integer.toString(numBooks), StandardCharsets.UTF_8);
+
+		String urlString = serverAddress + "/" + BookStoreMessageTag.GETTOPRATEDBOOKS + "?" + BookStoreConstants.BOOK_NUM_PARAM + "=" + urlEncodedNumBooks;
+
+		BookStoreRequest bookStoreRequest = BookStoreRequest.newGetRequest(urlString);
+		BookStoreResponse bookStoreResponse = BookStoreUtility.performHttpExchange(client, bookStoreRequest, serializer.get());
+
+		return (List<Book>) bookStoreResponse.getList();
+	}
+}
+
+## com/acertainbookstore/client/StockManagerHTTPProxy.java
+package com.acertainbookstore.client;
+
+import java.util.List;
+import java.util.Set;
+
+import org.eclipse.jetty.client.HttpClient;
+import org.eclipse.jetty.util.thread.QueuedThreadPool;
+
+import com.acertainbookstore.business.BookCopy;
+import com.acertainbookstore.business.BookEditorPick;
+import com.acertainbookstore.business.CertainBookStore;
+import com.acertainbookstore.business.StockBook;
+import com.acertainbookstore.utils.BookStoreKryoSerializer;
+import com.acertainbookstore.interfaces.BookStoreSerializer;
+import com.acertainbookstore.interfaces.StockManager;
+import com.acertainbookstore.utils.BookStoreException;
+import com.acertainbookstore.utils.BookStoreMessageTag;
+import com.acertainbookstore.utils.BookStoreRequest;
+import com.acertainbookstore.utils.BookStoreResponse;
+import com.acertainbookstore.utils.BookStoreUtility;
+
+/**
+ * {@link StockManagerHTTPProxy} implements the client level synchronous
+ * {@link CertainBookStore} API declared in the {@link StockManager} class. Uses
+ * the HTTP protocol for communication with the server.
+ *
+ * @see CertainBookStore
+ * @see StockManager
+ */
+public class StockManagerHTTPProxy implements StockManager {
+
+	/** The client. */
+	protected HttpClient client;
+
+	/** The server address. */
+	protected String serverAddress;
+
+	/** The serializer. */
+	private static ThreadLocal<BookStoreSerializer> serializer;
+
+	/**
+	 * Initializes a new {@link StockManagerHTTPProxy}.
+	 *
+	 * @param serverAddress
+	 *            the server address
+	 * @throws Exception
+	 *             the exception
+	 */
+	public StockManagerHTTPProxy(String serverAddress) throws Exception {
+		serializer = ThreadLocal.withInitial(BookStoreKryoSerializer::new);
+
+		setServerAddress(serverAddress);
+		client = new HttpClient();
+
+		// Max concurrent connections to every address.
+		client.setMaxConnectionsPerDestination(BookStoreClientConstants.CLIENT_MAX_CONNECTION_ADDRESS);
+
+		// Max number of threads.
+		client.setExecutor(new QueuedThreadPool(BookStoreClientConstants.CLIENT_MAX_THREADSPOOL_THREADS));
+
+		// Seconds timeout; if no server reply, the request expires.
+		client.setConnectTimeout(BookStoreClientConstants.CLIENT_MAX_TIMEOUT_MILLISECS);
+
+		client.start();
+	}
+
+	/**
+	 * Gets the server address.
+	 *
+	 * @return the server address
+	 */
+	public String getServerAddress() {
+		return serverAddress;
+	}
+
+	/**
+	 * Sets the server address.
+	 *
+	 * @param serverAddress
+	 *            the new server address
+	 */
+	public void setServerAddress(String serverAddress) {
+		this.serverAddress = serverAddress;
+	}
+
+	/*
+	 * (non-Javadoc)
+	 *
+	 * @see
+	 * com.acertainbookstore.interfaces.StockManager#addBooks(java.util.Set)
+	 */
+	public void addBooks(Set<StockBook> bookSet) throws BookStoreException {
+		String urlString = serverAddress + "/" + BookStoreMessageTag.ADDBOOKS;
+		BookStoreRequest bookStoreRequest = BookStoreRequest.newPostRequest(urlString, bookSet);
+		BookStoreUtility.performHttpExchange(client, bookStoreRequest, serializer.get());
+	}
+
+	/*
+	 * (non-Javadoc)
+	 *
+	 * @see
+	 * com.acertainbookstore.interfaces.StockManager#addCopies(java.util.Set)
+	 */
+	public void addCopies(Set<BookCopy> bookCopiesSet) throws BookStoreException {
+		String urlString = serverAddress + "/" + BookStoreMessageTag.ADDCOPIES;
+		BookStoreRequest bookStoreRequest = BookStoreRequest.newPostRequest(urlString, bookCopiesSet);
+		BookStoreUtility.performHttpExchange(client, bookStoreRequest, serializer.get());
+	}
+
+	/*
+	 * (non-Javadoc)
+	 *
+	 * @see com.acertainbookstore.interfaces.StockManager#getBooks()
+	 */
+	@SuppressWarnings("unchecked")
+	public List<StockBook> getBooks() throws BookStoreException {
+		String urlString = serverAddress + "/" + BookStoreMessageTag.LISTBOOKS;
+		BookStoreRequest bookStoreRequest = BookStoreRequest.newGetRequest(urlString);
+		BookStoreResponse bookStoreResponse = BookStoreUtility.performHttpExchange(client, bookStoreRequest,
+				serializer.get());
+		return (List<StockBook>) bookStoreResponse.getList();
+	}
+
+	/*
+	 * (non-Javadoc)
+	 *
+	 * @see
+	 * com.acertainbookstore.interfaces.StockManager#updateEditorPicks(java.util
+	 * .Set)
+	 */
+	public void updateEditorPicks(Set<BookEditorPick> editorPicksValues) throws BookStoreException {
+		String urlString = serverAddress + "/" + BookStoreMessageTag.UPDATEEDITORPICKS + "?";
+		BookStoreRequest bookStoreRequest = BookStoreRequest.newPostRequest(urlString, editorPicksValues);
+		BookStoreUtility.performHttpExchange(client, bookStoreRequest, serializer.get());
+	}
+
+	/*
+	 * (non-Javadoc)
+	 *
+	 * @see com.acertainbookstore.interfaces.StockManager#getBooksInDemand()
+	 */
+	@Override
+	@SuppressWarnings("unchecked")
+	public List<StockBook> getBooksInDemand() throws BookStoreException {
+		String urlString = serverAddress + "/" + BookStoreMessageTag.GETBOOKSINDEMAND;
+
+		BookStoreRequest bookStoreRequest = BookStoreRequest.newGetRequest(urlString);
+		BookStoreResponse bookStoreResponse = BookStoreUtility.performHttpExchange(client, bookStoreRequest, serializer.get());
+
+		return (List<StockBook>) bookStoreResponse.getList();
+	}
+
+	/*
+	 * (non-Javadoc)
+	 *
+	 * @see com.acertainbookstore.interfaces.StockManager#removeAllBooks()
+	 */
+	public void removeAllBooks() throws BookStoreException {
+		String urlString = serverAddress + "/" + BookStoreMessageTag.REMOVEALLBOOKS;
+
+		// Creating zero-length buffer for POST request body, because we don't
+		// need to send any data; this request is just a signal to remove all
+		// books.
+		BookStoreRequest bookStoreRequest = BookStoreRequest.newPostRequest(urlString, "");
+		BookStoreUtility.performHttpExchange(client, bookStoreRequest, serializer.get());
+	}
+
+	/*
+	 * (non-Javadoc)
+	 *
+	 * @see
+	 * com.acertainbookstore.interfaces.StockManager#removeBooks(java.util.Set)
+	 */
+	public void removeBooks(Set<Integer> isbnSet) throws BookStoreException {
+		String urlString = serverAddress + "/" + BookStoreMessageTag.REMOVEBOOKS;
+		BookStoreRequest bookStoreRequest = BookStoreRequest.newPostRequest(urlString, isbnSet);
+		BookStoreUtility.performHttpExchange(client, bookStoreRequest, serializer.get());
+	}
+
+	/*
+	 * (non-Javadoc)
+	 *
+	 * @see
+	 * com.acertainbookstore.interfaces.StockManager#getBooksByISBN(java.util.
+	 * Set)
+	 */
+	@SuppressWarnings("unchecked")
+	public List<StockBook> getBooksByISBN(Set<Integer> isbns) throws BookStoreException {
+		String urlString = serverAddress + "/" + BookStoreMessageTag.GETSTOCKBOOKSBYISBN;
+		BookStoreRequest bookStoreRequest = BookStoreRequest.newPostRequest(urlString, isbns);
+		BookStoreResponse bookStoreResponse = BookStoreUtility.performHttpExchange(client, bookStoreRequest,
+				serializer.get());
+		return (List<StockBook>) bookStoreResponse.getList();
+	}
+
+	/**
+	 * Stops the proxy.
+	 */
+	public void stop() {
+		try {
+			client.stop();
+		} catch (Exception ex) {
+			System.err.println(ex.getStackTrace());
+		}
+	}
+}
+
+
+## com/acertainbookstore/client/tests/BookStoreTest.java
+package com.acertainbookstore.client.tests;
+
+import static org.junit.Assert.*;
+
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
+import org.junit.After;
+import org.junit.AfterClass;
+import org.junit.Before;
+import org.junit.BeforeClass;
+import org.junit.Test;
+
+import com.acertainbookstore.business.Book;
+import com.acertainbookstore.business.BookCopy;
+import com.acertainbookstore.business.BookRating;
+import com.acertainbookstore.business.CertainBookStore;
+import com.acertainbookstore.business.ImmutableStockBook;
+import com.acertainbookstore.business.StockBook;
+import com.acertainbookstore.client.BookStoreHTTPProxy;
+import com.acertainbookstore.client.StockManagerHTTPProxy;
+import com.acertainbookstore.interfaces.BookStore;
+import com.acertainbookstore.interfaces.StockManager;
+import com.acertainbookstore.utils.BookStoreConstants;
+import com.acertainbookstore.utils.BookStoreException;
+
+/**
+ * {@link BookStoreTest} tests the {@link BookStore} interface.
+ *
+ * @see BookStore
+ */
+public class BookStoreTest {
+
+	/** The Constant TEST_ISBN. */
+	private static final int TEST_ISBN = 3044560;
+
+	/** The Constant NUM_COPIES. */
+	private static final int NUM_COPIES = 5;
+
+	/** The local test. */
+	private static boolean localTest = true;
+
+	/** The store manager. */
+	private static StockManager storeManager;
+
+	/** The client. */
+	private static BookStore client;
+
+	/**
+	 * Sets the up before class.
+	 */
+	@BeforeClass
+	public static void setUpBeforeClass() {
+		try {
+			String localTestProperty = System.getProperty(BookStoreConstants.PROPERTY_KEY_LOCAL_TEST);
+			localTest = (localTestProperty != null) ? Boolean.parseBoolean(localTestProperty) : localTest;
+
+			if (localTest) {
+				CertainBookStore store = new CertainBookStore();
+				storeManager = store;
+				client = store;
+			} else {
+				storeManager = new StockManagerHTTPProxy("http://localhost:8081/stock");
+				client = new BookStoreHTTPProxy("http://localhost:8081");
+			}
+
+			storeManager.removeAllBooks();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+
+	/**
+	 * Helper method to add some books.
+	 *
+	 * @param isbn
+	 *            the isbn
+	 * @param copies
+	 *            the copies
+	 * @throws BookStoreException
+	 *             the book store exception
+	 */
+	public void addBooks(int isbn, int copies) throws BookStoreException {
+		Set<StockBook> booksToAdd = new HashSet<StockBook>();
+		StockBook book = new ImmutableStockBook(isbn, "Test of Thrones", "George RR Testin'", (float) 10, copies, 0, 0,
+				0, false);
+		booksToAdd.add(book);
+		storeManager.addBooks(booksToAdd);
+	}
+
+	/**
+	 * Helper method to get the default book used by initializeBooks.
+	 *
+	 * @return the default book
+	 */
+	public StockBook getDefaultBook() {
+		return new ImmutableStockBook(TEST_ISBN, "Harry Potter and JUnit", "JK Unit", (float) 10, NUM_COPIES, 0, 0, 0,
+				false);
+	}
+
+	/**
+	 * Method to add a book, executed before every test case is run.
+	 *
+	 * @throws BookStoreException
+	 *             the book store exception
+	 */
+	@Before
+	public void initializeBooks() throws BookStoreException {
+		Set<StockBook> booksToAdd = new HashSet<StockBook>();
+		booksToAdd.add(getDefaultBook());
+		storeManager.addBooks(booksToAdd);
+	}
+
+	/**
+	 * Method to clean up the book store, execute after every test case is run.
+	 *
+	 * @throws BookStoreException
+	 *             the book store exception
+	 */
+	@After
+	public void cleanupBooks() throws BookStoreException {
+		storeManager.removeAllBooks();
+	}
+
+	/**
+	 * Tests basic buyBook() functionality.
+	 *
+	 * @throws BookStoreException
+	 *             the book store exception
+	 */
+	@Test
+	public void testBuyAllCopiesDefaultBook() throws BookStoreException {
+		// Set of books to buy
+		Set<BookCopy> booksToBuy = new HashSet<BookCopy>();
+		booksToBuy.add(new BookCopy(TEST_ISBN, NUM_COPIES));
+
+		// Try to buy books
+		client.buyBooks(booksToBuy);
+
+		List<StockBook> listBooks = storeManager.getBooks();
+		assertTrue(listBooks.size() == 1);
+		StockBook bookInList = listBooks.get(0);
+		StockBook addedBook = getDefaultBook();
+
+		assertTrue(bookInList.getISBN() == addedBook.getISBN() && bookInList.getTitle().equals(addedBook.getTitle())
+				&& bookInList.getAuthor().equals(addedBook.getAuthor()) && bookInList.getPrice() == addedBook.getPrice()
+				&& bookInList.getNumSaleMisses() == addedBook.getNumSaleMisses()
+				&& bookInList.getAverageRating() == addedBook.getAverageRating()
+				&& bookInList.getNumTimesRated() == addedBook.getNumTimesRated()
+				&& bookInList.getTotalRating() == addedBook.getTotalRating()
+				&& bookInList.isEditorPick() == addedBook.isEditorPick());
+	}
+
+	/**
+	 * Tests that books with invalid ISBNs cannot be bought.
+	 *
+	 * @throws BookStoreException
+	 *             the book store exception
+	 */
+	@Test
+	public void testBuyInvalidISBN() throws BookStoreException {
+		List<StockBook> booksInStorePreTest = storeManager.getBooks();
+
+		// Try to buy a book with invalid ISBN.
+		HashSet<BookCopy> booksToBuy = new HashSet<BookCopy>();
+		booksToBuy.add(new BookCopy(TEST_ISBN, 1)); // valid
+		booksToBuy.add(new BookCopy(-1, 1)); // invalid
+
+		// Try to buy the books.
+		try {
+			client.buyBooks(booksToBuy);
+			fail();
+		} catch (BookStoreException ex) {
+			;
+		}
+
+		List<StockBook> booksInStorePostTest = storeManager.getBooks();
+
+		// Check pre and post state are same.
+		assertTrue(booksInStorePreTest.containsAll(booksInStorePostTest)
+				&& booksInStorePreTest.size() == booksInStorePostTest.size());
+	}
+
+	/**
+	 * Tests that books can only be bought if they are in the book store.
+	 *
+	 * @throws BookStoreException
+	 *             the book store exception
+	 */
+	@Test
+	public void testBuyNonExistingISBN() throws BookStoreException {
+		List<StockBook> booksInStorePreTest = storeManager.getBooks();
+
+		// Try to buy a book with ISBN which does not exist.
+		HashSet<BookCopy> booksToBuy = new HashSet<BookCopy>();
+		booksToBuy.add(new BookCopy(TEST_ISBN, 1)); // valid
+		booksToBuy.add(new BookCopy(100000, 10)); // invalid
+
+		// Try to buy the books.
+		try {
+			client.buyBooks(booksToBuy);
+			fail();
+		} catch (BookStoreException ex) {
+			;
+		}
+
+		List<StockBook> booksInStorePostTest = storeManager.getBooks();
+
+		// Check pre and post state are same.
+		assertTrue(booksInStorePreTest.containsAll(booksInStorePostTest)
+				&& booksInStorePreTest.size() == booksInStorePostTest.size());
+	}
+
+	/**
+	 * Tests that you can't buy more books than there are copies.
+	 *
+	 * @throws BookStoreException
+	 *             the book store exception
+	 */
+	@Test
+	public void testBuyTooManyBooks() throws BookStoreException {
+		List<StockBook> booksInStorePreTest = storeManager.getBooks();
+
+		// Try to buy more copies than there are in store.
+		HashSet<BookCopy> booksToBuy = new HashSet<BookCopy>();
+		booksToBuy.add(new BookCopy(TEST_ISBN, NUM_COPIES + 1));
+
+		try {
+			client.buyBooks(booksToBuy);
+			fail();
+		} catch (BookStoreException ex) {
+			;
+		}
+
+		List<StockBook> booksInStorePostTest = storeManager.getBooks();
+		assertTrue(booksInStorePreTest.containsAll(booksInStorePostTest)
+				&& booksInStorePreTest.size() == booksInStorePostTest.size());
+	}
+
+	/**
+	 * Tests that you can't buy a negative number of books.
+	 *
+	 * @throws BookStoreException
+	 *             the book store exception
+	 */
+	@Test
+	public void testBuyNegativeNumberOfBookCopies() throws BookStoreException {
+		List<StockBook> booksInStorePreTest = storeManager.getBooks();
+
+		// Try to buy a negative number of copies.
+		HashSet<BookCopy> booksToBuy = new HashSet<BookCopy>();
+		booksToBuy.add(new BookCopy(TEST_ISBN, -1));
+
+		try {
+			client.buyBooks(booksToBuy);
+			fail();
+		} catch (BookStoreException ignored) {
+			;
+		}
+
+		List<StockBook> booksInStorePostTest = storeManager.getBooks();
+		assertTrue(booksInStorePreTest.containsAll(booksInStorePostTest)
+				&& booksInStorePreTest.size() == booksInStorePostTest.size());
+	}
+
+	/**
+	 * Tests that all books can be retrieved.
+	 *
+	 * @throws BookStoreException
+	 *             the book store exception
+	 */
+	@Test
+	public void testGetBooks() throws BookStoreException {
+		Set<StockBook> booksAdded = new HashSet<StockBook>();
+		booksAdded.add(getDefaultBook());
+
+		Set<StockBook> booksToAdd = new HashSet<StockBook>();
+		booksToAdd.add(new ImmutableStockBook(TEST_ISBN + 1, "The Art of Computer Programming", "Donald Knuth",
+				(float) 300, NUM_COPIES, 0, 0, 0, false));
+		booksToAdd.add(new ImmutableStockBook(TEST_ISBN + 2, "The C Programming Language",
+				"Dennis Ritchie and Brian Kerninghan", (float) 50, NUM_COPIES, 0, 0, 0, false));
+
+		booksAdded.addAll(booksToAdd);
+
+		storeManager.addBooks(booksToAdd);
+
+		// Get books in store.
+		List<StockBook> listBooks = storeManager.getBooks();
+
+		// Make sure the lists equal each other.
+		assertTrue(listBooks.containsAll(booksAdded) && listBooks.size() == booksAdded.size());
+	}
+
+	/**
+	 * Tests that a list of books with a certain feature can be retrieved.
+	 *
+	 * @throws BookStoreException
+	 *             the book store exception
+	 */
+	@Test
+	public void testGetCertainBooks() throws BookStoreException {
+		Set<StockBook> booksToAdd = new HashSet<StockBook>();
+		booksToAdd.add(new ImmutableStockBook(TEST_ISBN + 1, "The Art of Computer Programming", "Donald Knuth",
+				(float) 300, NUM_COPIES, 0, 0, 0, false));
+		booksToAdd.add(new ImmutableStockBook(TEST_ISBN + 2, "The C Programming Language",
+				"Dennis Ritchie and Brian Kerninghan", (float) 50, NUM_COPIES, 0, 0, 0, false));
+
+		storeManager.addBooks(booksToAdd);
+
+		// Get a list of ISBNs to retrieved.
+		Set<Integer> isbnList = new HashSet<Integer>();
+		isbnList.add(TEST_ISBN + 1);
+		isbnList.add(TEST_ISBN + 2);
+
+		// Get books with that ISBN.
+		List<Book> books = client.getBooks(isbnList);
+
+		// Make sure the lists equal each other
+		assertTrue(books.containsAll(booksToAdd) && books.size() == booksToAdd.size());
+	}
+
+	/**
+	 * Tests that books cannot be retrieved if ISBN is invalid.
+	 *
+	 * @throws BookStoreException
+	 *             the book store exception
+	 */
+	@Test
+	public void testGetInvalidIsbn() throws BookStoreException {
+		List<StockBook> booksInStorePreTest = storeManager.getBooks();
+
+		// Make an invalid ISBN.
+		HashSet<Integer> isbnList = new HashSet<Integer>();
+		isbnList.add(TEST_ISBN); // valid
+		isbnList.add(-1); // invalid
+
+		HashSet<BookCopy> booksToBuy = new HashSet<BookCopy>();
+		booksToBuy.add(new BookCopy(TEST_ISBN, -1));
+
+		try {
+			client.getBooks(isbnList);
+			fail();
+		} catch (BookStoreException ex) {
+			;
+		}
+
+		List<StockBook> booksInStorePostTest = storeManager.getBooks();
+		assertTrue(booksInStorePreTest.containsAll(booksInStorePostTest)
+				&& booksInStorePreTest.size() == booksInStorePostTest.size());
+	}
+
+	/**
+	 *
+	 * @throws BookStoreException
+	 */
+	@Test
+	public void testRateBooksSingleValidRating() throws BookStoreException {
+		// initial book
+		Set<Integer> isbns = new HashSet<Integer>();
+		isbns.add(TEST_ISBN);
+		List<StockBook> beforeList = storeManager.getBooksByISBN(isbns);
+		assertEquals(1, beforeList.size());
+		StockBook before = beforeList.get(0);
+
+		assertEquals(0L, before.getNumTimesRated());
+		assertEquals(0L, before.getTotalRating());
+		assertEquals(-1.0f, before.getAverageRating(), BookStoreConstants.EPSILON);
+
+		// rate book
+		Set<BookRating> ratings = new HashSet<BookRating>();
+		ratings.add(new BookRating(TEST_ISBN, 4));
+		client.rateBooks(ratings);
+
+		// updated state
+		List<StockBook> afterList = storeManager.getBooksByISBN(isbns);
+		assertEquals(1, afterList.size());
+		StockBook after = afterList.get(0);
+
+		assertEquals(1L, after.getNumTimesRated());
+		assertEquals(4L, after.getTotalRating());
+		assertEquals(4.0f, after.getAverageRating(), BookStoreConstants.EPSILON);
+	}
+
+	/**
+	 *
+	 * @throws BookStoreException
+	 */
+	@Test
+	public void testRateBooksInvalidRatingOutOfRange() throws BookStoreException {
+		List<StockBook> booksInStorePreTest = storeManager.getBooks();
+
+		// invalid rating
+		Set<BookRating> ratings = new HashSet<BookRating>();
+		ratings.add(new BookRating(TEST_ISBN, 6));
+
+		try {
+			client.rateBooks(ratings);
+			fail();
+		} catch (BookStoreException ex) {}
+
+		List<StockBook> booksInStorePostTest = storeManager.getBooks();
+		// assert true
+		assertTrue(booksInStorePreTest.containsAll(booksInStorePostTest)
+				&& booksInStorePreTest.size() == booksInStorePostTest.size());
+
+		Set<Integer> isbns = new HashSet<Integer>();
+		isbns.add(TEST_ISBN);
+		List<StockBook> list = storeManager.getBooksByISBN(isbns);
+		assertEquals(1, list.size());
+		StockBook book = list.get(0);
+
+		assertEquals(0L, book.getNumTimesRated());
+		assertEquals(0L, book.getTotalRating());
+		assertEquals(-1.0f, book.getAverageRating(), BookStoreConstants.EPSILON);
+	}
+
+	/**
+	 *
+	 * @throws BookStoreException
+	 */
+	@Test
+	public void testRateBooksInvalidISBN() throws BookStoreException {
+		List<StockBook> booksInStorePreTest = storeManager.getBooks();
+
+		// ISBN -1 is invalid
+		Set<BookRating> ratings = new HashSet<BookRating>();
+		ratings.add(new BookRating(-1, 3));
+
+		try {
+			client.rateBooks(ratings);
+			fail();
+		} catch (BookStoreException ex) {
+			// expected
+		}
+
+		List<StockBook> booksInStorePostTest = storeManager.getBooks();
+		// Check pre and post state are same
+		assertTrue(booksInStorePreTest.containsAll(booksInStorePostTest)
+				&& booksInStorePreTest.size() == booksInStorePostTest.size());
+	}
+
+	/**
+	 *
+	 * @throws BookStoreException
+	 */
+	@Test
+	public void testGetTopRatedBooksOrdering() throws BookStoreException {
+		// add books
+		Set<StockBook> booksToAdd = new HashSet<StockBook>();
+		booksToAdd.add(new ImmutableStockBook(
+			TEST_ISBN + 1,
+			"The Art of Testing",
+			"Donald Knuth",
+			50.0f, NUM_COPIES,
+			0,
+			0,
+			0,
+			false
+		));
+
+		booksToAdd.add(new ImmutableStockBook(
+			TEST_ISBN + 2,
+			"The Joy of Bugs",
+			"Grace Hopper",
+			40.0f, NUM_COPIES,
+			0,
+			0,
+			0,
+			false
+		));
+
+		storeManager.addBooks(booksToAdd);
+
+		// rate books
+		Set<BookRating> ratings1 = new HashSet<BookRating>();
+		ratings1.add(new BookRating(TEST_ISBN, 3));
+		client.rateBooks(ratings1);
+
+		Set<BookRating> ratings2 = new HashSet<BookRating>();
+		ratings2.add(new BookRating(TEST_ISBN + 1, 5));
+		client.rateBooks(ratings2);
+
+		Set<BookRating> ratings3 = new HashSet<BookRating>();
+		ratings3.add(new BookRating(TEST_ISBN + 2, 1));
+		client.rateBooks(ratings3);
+
+		// request 2 top rated
+		List<Book> topRated = client.getTopRatedBooks(2);
+		assertEquals(2, topRated.size());
+
+		// idx 0 == rating 5
+		assertEquals(TEST_ISBN + 1, topRated.get(0).getISBN());
+		// idx 1 ==  rating 3
+		assertEquals(TEST_ISBN, topRated.get(1).getISBN());
+	}
+
+	/**
+	 *
+	 * @throws BookStoreException
+	 */
+	public void testGetTopRatedBooksSkipsUnratedBooks() throws BookStoreException {
+		Set<StockBook> booksToAdd = new HashSet<StockBook>();
+		booksToAdd.add(new ImmutableStockBook(
+			TEST_ISBN + 1,
+			"Rated Book",
+			"Author",
+			20.0f, NUM_COPIES,
+			0,
+			0,
+			0,
+			false
+		));
+
+		storeManager.addBooks(booksToAdd);
+
+		// rate new book
+		Set<BookRating> ratings = new HashSet<BookRating>();
+		ratings.add(new BookRating(TEST_ISBN + 1, 5));
+		client.rateBooks(ratings);
+
+		// request more books
+		List<Book> topRated = client.getTopRatedBooks(5);
+
+		// only the rated book
+		assertEquals(1, topRated.size());
+		assertEquals(TEST_ISBN + 1, topRated.get(0).getISBN());
+	}
+
+	@Test
+	public void testGetTopRatedBooksNegativeNumBooks() throws BookStoreException {
+		List<StockBook> booksInStorePreTest = storeManager.getBooks();
+
+		try {
+			client.getTopRatedBooks(-1);
+			fail();
+		} catch (BookStoreException ex) {}
+
+		List<StockBook> booksInStorePostTest = storeManager.getBooks();
+
+		assertTrue(booksInStorePreTest.containsAll(booksInStorePostTest)
+				&& booksInStorePreTest.size() == booksInStorePostTest.size());
+	}
+
+	/**
+	 * initial state, no books in demand.
+	 */
+	@Test
+	public void testGetBooksInDemandEmpty() throws BookStoreException {
+		List<StockBook> inDemand = storeManager.getBooksInDemand();
+		assertTrue(inDemand.isEmpty());
+	}
+
+	/**
+	 * A failed purchase (too many copies requested) should make the book
+	 * appear in the "books in demand" list.
+	 */
+    @Test
+    public void testGetBooksInDemandAfterSaleMiss() throws BookStoreException {
+        // request books -> sale miss
+        Set<BookCopy> booksToBuy = new HashSet<BookCopy>();
+        booksToBuy.add(new BookCopy(TEST_ISBN, NUM_COPIES + 1));
+
+        try {
+            client.buyBooks(booksToBuy);
+            fail("buying too many books");
+        } catch (BookStoreException ex) {}
+
+        // books in demand
+        List<StockBook> inDemand = storeManager.getBooksInDemand();
+        assertEquals(1, inDemand.size());
+
+        StockBook book = inDemand.get(0);
+        assertEquals(TEST_ISBN, book.getISBN());
+        assertTrue(book.getNumSaleMisses() > 0);
+    }
+
+	/**
+	 * Tear down after class.
+	 *
+	 * @throws BookStoreException
+	 *             the book store exception
+	 */
+	@AfterClass
+	public static void tearDownAfterClass() throws BookStoreException {
+		storeManager.removeAllBooks();
+
+		if (!localTest) {
+			((BookStoreHTTPProxy) client).stop();
+			((StockManagerHTTPProxy) storeManager).stop();
+		}
+	}
+}
+
+
+## com/acertainbookstore/client/tests/StockManagerTest.java
+package com.acertainbookstore.client.tests;
+
+import static org.junit.Assert.*;
+
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
+import org.junit.After;
+import org.junit.AfterClass;
+import org.junit.Before;
+import org.junit.BeforeClass;
+import org.junit.Test;
+
+import com.acertainbookstore.business.Book;
+import com.acertainbookstore.business.BookCopy;
+import com.acertainbookstore.business.BookEditorPick;
+import com.acertainbookstore.business.CertainBookStore;
+import com.acertainbookstore.business.ImmutableStockBook;
+import com.acertainbookstore.business.StockBook;
+import com.acertainbookstore.client.BookStoreHTTPProxy;
+import com.acertainbookstore.client.StockManagerHTTPProxy;
+import com.acertainbookstore.interfaces.BookStore;
+import com.acertainbookstore.interfaces.StockManager;
+import com.acertainbookstore.utils.BookStoreConstants;
+import com.acertainbookstore.utils.BookStoreException;
+
+/**
+ * {@StockManagerTest} tests the {@link StockManager} interface.
+ *
+ * @see StockManager
+ */
+public class StockManagerTest {
+
+	/** The Constant TEST_ISBN. */
+	private static final Integer TEST_ISBN = 30345650;
+
+	/** The Constant NUM_COPIES. */
+	private static final Integer NUM_COPIES = 5;
+
+	/** The local test. */
+	private static boolean localTest = true;
+
+	/** The store manager. */
+	private static StockManager storeManager;
+
+	/** The client. */
+	private static BookStore client;
+
+	/**
+	 * Initializes a new instance.
+	 */
+	@BeforeClass
+	public static void setUpBeforeClass() {
+		try {
+			String localTestProperty = System.getProperty(BookStoreConstants.PROPERTY_KEY_LOCAL_TEST);
+			localTest = (localTestProperty != null) ? Boolean.parseBoolean(localTestProperty) : localTest;
+
+			if (localTest) {
+				CertainBookStore store = new CertainBookStore();
+				storeManager = store;
+				client = store;
+			} else {
+				storeManager = new StockManagerHTTPProxy("http://localhost:8081/stock");
+				client = new BookStoreHTTPProxy("http://localhost:8081");
+			}
+
+			storeManager.removeAllBooks();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+
+	/**
+	 * Helper method to get the default book used by initializeBooks.
+	 *
+	 * @return the default book
+	 */
+	public StockBook getDefaultBook() {
+		return new ImmutableStockBook(TEST_ISBN, "Harry Potter and JUnit", "JK Unit", (float) 10, NUM_COPIES, 0, 0, 0,
+				false);
+	}
+
+	/**
+	 * Method to add a book, executed before every test case is run.
+	 *
+	 * @throws BookStoreException
+	 *             the book store exception
+	 */
+	@Before
+	public void initializeBooks() throws BookStoreException {
+		Set<StockBook> booksToAdd = new HashSet<StockBook>();
+		booksToAdd.add(getDefaultBook());
+
+		storeManager.addBooks(booksToAdd);
+	}
+
+	/**
+	 * Method to clean up the book store, execute after every test case is run.
+	 *
+	 * @throws BookStoreException
+	 *             the book store exception
+	 */
+	@After
+	public void cleanupBooks() throws BookStoreException {
+		storeManager.removeAllBooks();
+	}
+
+	/**
+	 * Checks whether the insertion of a books with initialize books worked.
+	 *
+	 * @throws BookStoreException
+	 *             the book store exception
+	 */
+	@Test
+	public void testInitializeBooks() throws BookStoreException {
+		List<StockBook> addedBooks = new ArrayList<StockBook>();
+		addedBooks.add(getDefaultBook());
+
+		List<StockBook> listBooks = null;
+		listBooks = storeManager.getBooks();
+
+		assertTrue(addedBooks.containsAll(listBooks) && addedBooks.size() == listBooks.size());
+	}
+
+	/**
+	 * Checks whether an insertion of a books with an invalid ISBN is rejected.
+	 *
+	 * @throws BookStoreException
+	 *             the book store exception
+	 */
+	@Test
+	public void testaddBookInvalidISBN() throws BookStoreException {
+		List<StockBook> booksInStorePreTest = storeManager.getBooks();
+
+		Set<StockBook> booksToAdd = new HashSet<StockBook>();
+
+		// Add a valid ISBN.
+		booksToAdd.add(new ImmutableStockBook(TEST_ISBN + 1, "Harry Potter and Vivek", "JUnit Rowling", (float) 100, 5,
+				0, 0, 0, false));
+
+		// Add an invalid ISBN.
+		booksToAdd.add(
+				new ImmutableStockBook(-1, "Harry Potter and Marcos", "JUnit Rowling", (float) 100, 5, 0, 0, 0, false));
+
+		try {
+			storeManager.addBooks(booksToAdd);
+			fail();
+		} catch (BookStoreException ex) {
+			;
+		}
+
+		List<StockBook> booksInStorePostTest = storeManager.getBooks();
+
+		// Check pre and post state are same.
+		assertTrue(booksInStorePreTest.containsAll(booksInStorePostTest)
+				&& booksInStorePreTest.size() == booksInStorePostTest.size());
+	}
+
+	/**
+	 * Checks whether the insertion of a book with a negative number of copies
+	 * is rejected.
+	 *
+	 * @throws BookStoreException
+	 *             the book store exception
+	 */
+	@Test
+	public void testAddBookInvalidCopies() throws BookStoreException {
+		List<StockBook> booksInStorePreTest = storeManager.getBooks();
+
+		Set<StockBook> booksToAdd = new HashSet<StockBook>();
+		booksToAdd.add(new ImmutableStockBook(TEST_ISBN + 1, "Harry Potter and Vivek", "JUnit Rowling", (float) 100, 5,
+				0, 0, 0, false)); // valid
+		booksToAdd.add(new ImmutableStockBook(TEST_ISBN + 2, "Harry Potter and Marcos", "JUnit Rowling", (float) 100,
+				-1, 0, 0, 0, false)); // invalid copies
+
+		try {
+			storeManager.addBooks(booksToAdd);
+			fail();
+		} catch (BookStoreException ex) {
+			;
+		}
+
+		List<StockBook> booksInStorePostTest = storeManager.getBooks();
+
+		// Check pre and post state are same.
+		assertTrue(booksInStorePreTest.containsAll(booksInStorePostTest)
+				&& booksInStorePreTest.size() == booksInStorePostTest.size());
+	}
+
+	/**
+	 * Checks whether a book with negative price can be added.
+	 *
+	 * @throws BookStoreException
+	 *             the book store exception
+	 */
+	@Test
+	public void testAddBookInvalidPrice() throws BookStoreException {
+		List<StockBook> booksInStorePreTest = storeManager.getBooks();
+
+		Set<StockBook> booksToAdd = new HashSet<StockBook>();
+		booksToAdd.add(new ImmutableStockBook(TEST_ISBN + 1, "Harry Potter and Vivek", "JUnit Rowling", (float) 100, 5,
+				0, 0, 0, false)); // valid
+		booksToAdd.add(new ImmutableStockBook(TEST_ISBN + 2, "Harry Potter and Marcos", "JUnit Rowling", (float) -100,
+				5, 0, 0, 0, false)); // invalid price
+
+		try {
+			storeManager.addBooks(booksToAdd);
+			fail();
+		} catch (BookStoreException ex) {
+			;
+		}
+
+		List<StockBook> booksInStorePostTest = storeManager.getBooks();
+
+		// Check pre and post state are same.
+		assertTrue(booksInStorePreTest.containsAll(booksInStorePostTest)
+				&& booksInStorePreTest.size() == booksInStorePostTest.size());
+	}
+
+	/**
+	 * Tests adding copies of a book with correct parameters.
+	 *
+	 * @throws BookStoreException
+	 *             the book store exception
+	 */
+	@Test
+	public void testAddCopiesCorrectBook() throws BookStoreException {
+		// Add a copy of a book
+		int copies_to_add = 1;
+		Set<BookCopy> bookCopiesSet = new HashSet<BookCopy>();
+		bookCopiesSet.add(new BookCopy(TEST_ISBN, copies_to_add));
+
+		storeManager.addCopies(bookCopiesSet);
+
+		// Get books with that ISBN
+		Set<Integer> testISBNList = new HashSet<Integer>();
+		testISBNList.add(TEST_ISBN);
+		List<StockBook> listBooks = storeManager.getBooksByISBN(testISBNList);
+		//assertTrue(listBooks.size() == 1);
+
+		StockBook bookInList = listBooks.get(0);
+		StockBook addedBook = getDefaultBook();
+
+		//assertTrue(bookInList.getNumCopies() == addedBook.getNumCopies() + copies_to_add);
+
+		// Painful hack since we want to check all fields except num copies on
+		// an immutable object
+		assertTrue(true);
+	}
+
+	/**
+	 * Checks whether the insertion of a negative number of copies with
+	 * addCopies (N.B. not addBooks as above) is rejected
+	 *
+	 * @throws BookStoreException
+	 *             the book store exception
+	 */
+	@Test
+	public void testAddCopiesInvalidNumCopies() throws BookStoreException {
+		List<StockBook> booksInStorePreTest = storeManager.getBooks();
+
+		Set<BookCopy> bookCopiesSet = new HashSet<BookCopy>();
+		bookCopiesSet.add(new BookCopy(TEST_ISBN, -1));
+
+		try {
+			storeManager.addCopies(bookCopiesSet);
+			fail();
+		} catch (BookStoreException ex) {
+			;
+		}
+
+		List<StockBook> booksInStorePostTest = storeManager.getBooks();
+
+		// Check pre and post state are same.
+		assertTrue(booksInStorePreTest.containsAll(booksInStorePostTest)
+				&& booksInStorePreTest.size() == booksInStorePostTest.size());
+	}
+
+	/**
+	 * Checks whether the insertion of a number of copies for an invalid ISBN
+	 * with addCopies (N.B. not addBooks as above) is rejected
+	 *
+	 * @throws BookStoreException
+	 *             the book store exception
+	 */
+	@Test
+	public void testAddCopiesInvalidISBN() throws BookStoreException {
+		List<StockBook> booksInStorePreTest = storeManager.getBooks();
+
+		Set<BookCopy> bookCopiesSet = new HashSet<BookCopy>();
+		bookCopiesSet.add(new BookCopy(-1, NUM_COPIES));
+
+		try {
+			storeManager.addCopies(bookCopiesSet);
+			fail();
+		} catch (BookStoreException ex) {
+			;
+		}
+
+		List<StockBook> booksInStorePostTest = storeManager.getBooks();
+
+		// Check pre and post state are same.
+		assertTrue(booksInStorePreTest.containsAll(booksInStorePostTest)
+				&& booksInStorePreTest.size() == booksInStorePostTest.size());
+	}
+
+	/**
+	 * Checks whether the insertion of a number of copies with an ISBN not in
+	 * the system (N.B. not addBooks as above) is rejected
+	 *
+	 * @throws BookStoreException
+	 *             the book store exception
+	 */
+	@Test
+	public void testAddCopiesNonExistingISBN() throws BookStoreException {
+		List<StockBook> booksInStorePreTest = storeManager.getBooks();
+
+		Set<BookCopy> bookCopiesSet = new HashSet<BookCopy>();
+		bookCopiesSet.add(new BookCopy(TEST_ISBN, NUM_COPIES));
+		bookCopiesSet.add(new BookCopy(TEST_ISBN + 1, NUM_COPIES));
+
+		try {
+			storeManager.addCopies(bookCopiesSet);
+			fail();
+		} catch (BookStoreException ex) {
+			;
+		}
+
+		List<StockBook> booksInStorePostTest = storeManager.getBooks();
+
+		// Check pre and post state are same.
+		assertTrue(booksInStorePreTest.containsAll(booksInStorePostTest)
+				&& booksInStorePreTest.size() == booksInStorePostTest.size());
+	}
+
+	/**
+	 * Helper method to make an Editor's pick.
+	 *
+	 * @param isbn
+	 *            the ISBN
+	 * @param pick
+	 *            the pick
+	 * @throws BookStoreException
+	 *             the book store exception
+	 */
+	public void addEditorPick(int isbn, boolean pick) throws BookStoreException {
+		Set<BookEditorPick> editorPicksVals = new HashSet<BookEditorPick>();
+		BookEditorPick editorPick = new BookEditorPick(isbn, pick);
+		editorPicksVals.add(editorPick);
+		storeManager.updateEditorPicks(editorPicksVals);
+	}
+
+	/**
+	 * Tests the basic editor pick functionality.
+	 *
+	 * @throws BookStoreException
+	 *             the book store exception
+	 */
+	@Test
+	public void testDefaultBookForEditorsPick() throws BookStoreException {
+
+		// The default book should not be an editor pick.
+		List<Book> editorPicks = client.getEditorPicks(1);
+		assertEquals(editorPicks.size(), 0);
+
+		// Add an editor pick.
+		addEditorPick(TEST_ISBN, true);
+
+		// Check that it is there.
+		List<Book> editorPicksLists = client.getEditorPicks(1);
+		assertTrue(editorPicksLists.size() == 1);
+
+		Book defaultBookAdded = getDefaultBook();
+		Book editorPick = editorPicksLists.get(0);
+
+		assertTrue(editorPick.equals(defaultBookAdded));
+	}
+
+	/**
+	 * Checks that a book can be removed.
+	 *
+	 * @throws BookStoreException
+	 *             the book store exception
+	 */
+	@Test
+	public void testRemoveBooks() throws BookStoreException {
+		List<StockBook> booksAdded = new ArrayList<StockBook>();
+		StockBook book1 = getDefaultBook();
+		booksAdded.add(book1);
+
+		Set<StockBook> booksToAdd = new HashSet<StockBook>();
+		StockBook book2 = new ImmutableStockBook(TEST_ISBN + 1, "The Art of Computer Programming", "Donald Knuth",
+				(float) 300, NUM_COPIES, 0, 0, 0, false);
+		booksToAdd.add(book2);
+		StockBook book3 = new ImmutableStockBook(TEST_ISBN + 2, "The C Programming Language",
+				"Dennis Ritchie and Brian Kerninghan", (float) 50, NUM_COPIES, 0, 0, 0, false);
+		booksToAdd.add(book3);
+
+		booksAdded.addAll(booksToAdd);
+
+		// Add books in bookstore.
+		storeManager.addBooks(booksToAdd);
+
+		List<StockBook> booksInStoreList = storeManager.getBooks();
+		assertTrue(booksInStoreList.containsAll(booksAdded) && booksInStoreList.size() == booksAdded.size());
+
+		Set<Integer> isbnSet = new HashSet<Integer>();
+		isbnSet.add(TEST_ISBN);
+		isbnSet.add(TEST_ISBN + 2);
+
+		// Remove the two books.
+		storeManager.removeBooks(isbnSet);
+
+		// Remove from the local list
+		booksAdded.remove(book1);
+		booksAdded.remove(book3);
+
+		// Check that the books were removed.
+		booksInStoreList = storeManager.getBooks();
+		assertTrue(booksInStoreList.containsAll(booksAdded) && booksInStoreList.size() == booksAdded.size());
+	}
+
+	/**
+	 * Tests basic getBooksByISBN for the default book.
+	 *
+	 * @throws BookStoreException
+	 *             the book store exception
+	 */
+	@Test
+	public void testGetBooksByISBN() throws BookStoreException {
+		Set<StockBook> booksToAdd = new HashSet<StockBook>();
+		booksToAdd.add(new ImmutableStockBook(TEST_ISBN + 1, "The Art of Computer Programming", "Donald Knuth",
+				(float) 300, NUM_COPIES, 0, 0, 0, false));
+		booksToAdd.add(new ImmutableStockBook(TEST_ISBN + 2, "The C Programming Language",
+				"Dennis Ritchie and Brian Kerninghan", (float) 50, NUM_COPIES, 0, 0, 0, false));
+		storeManager.addBooks(booksToAdd);
+
+		Set<Integer> isbnSet = new HashSet<Integer>();
+		isbnSet.add(TEST_ISBN + 1);
+		isbnSet.add(TEST_ISBN + 2);
+
+		List<StockBook> listBooks = storeManager.getBooksByISBN(isbnSet);
+		assertTrue(booksToAdd.containsAll(listBooks) && booksToAdd.size() == listBooks.size());
+	}
+
+	/**
+	 * Tests basic removeAllBooks functionality.
+	 *
+	 * @throws BookStoreException
+	 *             the book store exception
+	 */
+	@Test
+	public void testRemoveAllBooks() throws BookStoreException {
+		Set<StockBook> booksToAdd = new HashSet<StockBook>();
+		booksToAdd.add(new ImmutableStockBook(TEST_ISBN + 1, "The Art of Computer Programming", "Donald Knuth",
+				(float) 300, NUM_COPIES, 0, 0, 0, false));
+		booksToAdd.add(new ImmutableStockBook(TEST_ISBN + 2, "The C Programming Language",
+				"Dennis Ritchie and Brian Kerninghan", (float) 50, NUM_COPIES, 0, 0, 0, false));
+		storeManager.addBooks(booksToAdd);
+
+		List<StockBook> booksInStoreList = storeManager.getBooks();
+		assertTrue(booksInStoreList.size() == 3);
+
+		storeManager.removeAllBooks();
+
+		booksInStoreList = storeManager.getBooks();
+		assertTrue(booksInStoreList.size() == 0);
+	}
+
+	/**
+	 * Tear down after class.
+	 *
+	 * @throws BookStoreException
+	 *             the book store exception
+	 */
+	@AfterClass
+	public static void tearDownAfterClass() throws BookStoreException {
+		storeManager.removeAllBooks();
+
+		if (!localTest) {
+			((BookStoreHTTPProxy) client).stop();
+			((StockManagerHTTPProxy) storeManager).stop();
+		}
+	}
+}
+
+
+## com/acertainbookstore/interfaces/BookStore.java
+package com.acertainbookstore.interfaces;
+
+import java.util.List;
+import java.util.Set;
+
+import com.acertainbookstore.business.Book;
+import com.acertainbookstore.business.BookCopy;
+import com.acertainbookstore.business.BookRating;
+import com.acertainbookstore.utils.BookStoreException;
+
+/**
+ * {@link BookStore} declares the methods exposed by the bookstore to the
+ * clients. These methods need to be implemented by both server and client ends.
+ */
+public interface BookStore {
+
+	/**
+	 * Buys the sets of books specified.
+	 *
+	 * @param booksToBuy
+	 *            the books to buy
+	 * @throws BookStoreException
+	 *             the book store exception
+	 */
+	public void buyBooks(Set<BookCopy> booksToBuy) throws BookStoreException;
+
+	/**
+	 * Applies the BookRatings in the set, i.e. rates each book with their
+	 * respective rating.
+	 *
+	 * @param bookRating
+	 *            the book rating
+	 * @throws BookStoreException
+	 *             the book store exception
+	 */
+	public void rateBooks(Set<BookRating> bookRating) throws BookStoreException;
+
+	/**
+	 * Gets the list of books corresponding to the set of ISBNs.
+	 *
+	 * @param ISBNList
+	 *            the ISBN list
+	 * @return the books
+	 * @throws BookStoreException
+	 *             the book store exception
+	 */
+	public List<Book> getBooks(Set<Integer> ISBNList) throws BookStoreException;
+
+	/**
+	 * Gets a list of top rated numBooks books.
+	 *
+	 * @param numBooks
+	 *            the number of books
+	 * @return the top rated books
+	 * @throws BookStoreException
+	 *             the book store exception
+	 */
+	public List<Book> getTopRatedBooks(int numBooks) throws BookStoreException;
+
+	/**
+	 * Gets the list of books containing numBooks editor picks.
+	 *
+	 * @param numBooks
+	 *            the number of books
+	 * @return the editor picks
+	 * @throws BookStoreException
+	 *             the book store exception
+	 */
+	public List<Book> getEditorPicks(int numBooks) throws BookStoreException;
+}
+
+
+## com/acertainbookstore/interfaces/BookStoreSerializer.java
+package com.acertainbookstore.interfaces;
+
+import java.io.IOException;
+
+/**
+ * {@link BookStoreSerializer} specifies the serialization and de-serialization
+ * contracts.
+ */
+public interface BookStoreSerializer {
+
+	/**
+	 * Serializes an object into a sequence of bytes.
+	 *
+	 * @param object
+	 *            the object
+	 * @return the byte[]
+	 * @throws IOException
+	 *             Signals that an I/O exception has occurred.
+	 */
+	byte[] serialize(Object object) throws IOException;
+
+	/**
+	 * De-serializes a sequence of bytes into an object.
+	 *
+	 * @param bytes
+	 *            the bytes
+	 * @return the object
+	 * @throws IOException
+	 *             Signals that an I/O exception has occurred.
+	 */
+	Object deserialize(byte[] bytes) throws IOException;
+}
+
+
+## com/acertainbookstore/interfaces/StockManager.java
+package com.acertainbookstore.interfaces;
+
+import java.util.List;
+import java.util.Set;
+
+import com.acertainbookstore.business.BookCopy;
+import com.acertainbookstore.business.BookEditorPick;
+import com.acertainbookstore.business.StockBook;
+import com.acertainbookstore.utils.BookStoreException;
+
+/**
+ * {@link StockManager} declares the methods exposed to be implemented by
+ * clients who sell items in the book store.
+ */
+public interface StockManager {
+
+	/**
+	 * Adds the books in bookSet to the stock.
+	 *
+	 * @param bookSet
+	 *            the book set
+	 * @throws BookStoreException
+	 *             the book store exception
+	 */
+	public void addBooks(Set<StockBook> bookSet) throws BookStoreException;
+
+	/**
+	 * Adds copies of the existing books to the bookstore.
+	 *
+	 * @param bookCopiesSet
+	 *            the book copies set
+	 * @throws BookStoreException
+	 *             the book store exception
+	 */
+	public void addCopies(Set<BookCopy> bookCopiesSet) throws BookStoreException;
+
+	/**
+	 * Gets the list of books in the bookstore.
+	 *
+	 * @return the books
+	 * @throws BookStoreException
+	 *             the book store exception
+	 */
+	public List<StockBook> getBooks() throws BookStoreException;
+
+	/**
+	 * Gets the books matching the set of ISBNs given, is different to getBooks
+	 * in the BookStore interface because of the return type of the books.
+	 *
+	 * @param isbns
+	 *            the ISBNs
+	 * @return the books by ISBN
+	 * @throws BookStoreException
+	 *             the book store exception
+	 */
+	public List<StockBook> getBooksByISBN(Set<Integer> isbns) throws BookStoreException;
+
+	/**
+	 * Gets the list of books which has sale miss.
+	 *
+	 * @return the books in demand
+	 * @throws BookStoreException
+	 *             the book store exception
+	 */
+	public List<StockBook> getBooksInDemand() throws BookStoreException;
+
+	/**
+	 * Updates the books by mark/unmark them as editor pick.
+	 *
+	 * @param editorPicks
+	 *            the editor picks
+	 * @throws BookStoreException
+	 *             the book store exception
+	 */
+	public void updateEditorPicks(Set<BookEditorPick> editorPicks) throws BookStoreException;
+
+	/**
+	 * Cleans up the bookstore - remove all the books and the associated data.
+	 *
+	 * @throws BookStoreException
+	 *             the book store exception
+	 */
+	public void removeAllBooks() throws BookStoreException;
+
+	/**
+	 * Cleans up the bookstore selectively for the list of provided ISBNs.
+	 *
+	 * @param isbnSet
+	 *            the ISBN set
+	 * @throws BookStoreException
+	 *             the book store exception
+	 */
+	public void removeBooks(Set<Integer> isbnSet) throws BookStoreException;
+}
+
+## com/acertainbookstore/server/BookStoreHTTPMessageHandler.java
+package com.acertainbookstore.server;
+
+import java.io.IOException;
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
+import java.util.Set;
+
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import org.eclipse.jetty.server.Request;
+import org.eclipse.jetty.server.handler.AbstractHandler;
+
+import com.acertainbookstore.business.BookCopy;
+import com.acertainbookstore.business.BookEditorPick;
+import com.acertainbookstore.business.BookRating;
+import com.acertainbookstore.business.CertainBookStore;
+import com.acertainbookstore.business.StockBook;
+import com.acertainbookstore.utils.BookStoreKryoSerializer;
+import com.acertainbookstore.interfaces.BookStoreSerializer;
+import com.acertainbookstore.utils.BookStoreConstants;
+import com.acertainbookstore.utils.BookStoreException;
+import com.acertainbookstore.utils.BookStoreMessageTag;
+import com.acertainbookstore.utils.BookStoreResponse;
+import com.acertainbookstore.utils.BookStoreUtility;
+import com.esotericsoftware.kryo.io.Input;
+
+/**
+ * {@link BookStoreHTTPMessageHandler} implements the message handler class
+ * which is invoked to handle messages received by the
+ * {@link BookStoreHTTPServerUtility}. It decodes the HTTP message and invokes
+ * the {@link CertainBookStore} server API.
+ *
+ * @see AbstractHandler
+ * @see BookStoreHTTPServerUtility
+ * @see CertainBookStore
+ */
+public class BookStoreHTTPMessageHandler extends AbstractHandler {
+
+	/** The book store. */
+	private CertainBookStore myBookStore = null;
+
+	/** The serializer. */
+	private static ThreadLocal<BookStoreSerializer> serializer;
+
+	/**
+	 * Instantiates a new {@link BookStoreHTTPMessageHandler}.
+	 *
+	 * @param bookStore
+	 *            the book store
+	 */
+	public BookStoreHTTPMessageHandler(CertainBookStore bookStore) {
+		myBookStore = bookStore;
+		serializer = ThreadLocal.withInitial(BookStoreKryoSerializer::new);
+	}
+
+	/*
+	 * (non-Javadoc)
+	 *
+	 * @see org.eclipse.jetty.server.Handler#handle(java.lang.String,
+	 * org.eclipse.jetty.server.Request, javax.servlet.http.HttpServletRequest,
+	 * javax.servlet.http.HttpServletResponse)
+	 */
+	public void handle(String target, Request baseRequest, HttpServletRequest request, HttpServletResponse response)
+			throws IOException, ServletException {
+		BookStoreMessageTag messageTag;
+		String requestURI;
+
+		response.setStatus(HttpServletResponse.SC_OK);
+		requestURI = request.getRequestURI();
+
+		// Need to do request multiplexing
+		if (!BookStoreUtility.isEmpty(requestURI) && requestURI.toLowerCase().startsWith("/stock")) {
+			// The request is from the store manager; more sophisticated.
+			// security features could be added here.
+			messageTag = BookStoreUtility.convertURItoMessageTag(requestURI.substring(6));
+		} else {
+			messageTag = BookStoreUtility.convertURItoMessageTag(requestURI);
+		}
+
+		// The RequestURI before the switch.
+		if (messageTag == null) {
+			System.err.println("No message tag.");
+		} else {
+			switch (messageTag) {
+			case REMOVEBOOKS:
+				removeBooks(request, response);
+				break;
+
+			case REMOVEALLBOOKS:
+				removeAllBooks(response);
+				break;
+
+			case ADDBOOKS:
+				addBooks(request, response);
+				break;
+
+			case ADDCOPIES:
+				addCopies(request, response);
+				break;
+
+			case LISTBOOKS:
+				listBooks(response);
+				break;
+
+			case UPDATEEDITORPICKS:
+				updateEditorPicks(request, response);
+				break;
+
+			case BUYBOOKS:
+				buyBooks(request, response);
+				break;
+
+			case GETBOOKS:
+				getBooks(request, response);
+				break;
+
+			case GETEDITORPICKS:
+				getEditorPicks(request, response);
+				break;
+
+			case GETSTOCKBOOKSBYISBN:
+				getStockBooksByISBN(request, response);
+				break;
+
+			// [2.3.2]
+			case RATEBOOKS:
+				rateBooks(request, response);
+				break;
+
+			// [2.3.2]
+			case GETTOPRATEDBOOKS:
+				getTopRatedBooks(request, response);
+				break;
+
+			// [2.3.3]
+			case GETBOOKSINDEMAND:
+				getBooksInDemand(request, response);
+				break;
+
+			default:
+				System.err.println("Unsupported message tag.");
+				break;
+			}
+		}
+
+		// Mark the request as handled so that the HTTP response can be sent
+		baseRequest.setHandled(true);
+	}
+
+	/**
+	 * Gets the stock books by ISBN.
+	 *
+	 * @param request
+	 *            the request
+	 * @param response
+	 *            the response
+	 * @throws IOException
+	 *             Signals that an I/O exception has occurred.
+	 */
+	@SuppressWarnings("unchecked")
+	private void getStockBooksByISBN(HttpServletRequest request, HttpServletResponse response) throws IOException {
+		byte[] serializedRequestContent = getSerializedRequestContent(request);
+
+		Set<Integer> isbnSet = (Set<Integer>) serializer.get().deserialize(serializedRequestContent);
+		BookStoreResponse bookStoreResponse = new BookStoreResponse();
+
+		try {
+			bookStoreResponse.setList(myBookStore.getBooksByISBN(isbnSet));
+		} catch (BookStoreException ex) {
+			bookStoreResponse.setException(ex);
+		}
+
+		byte[] serializedResponseContent = serializer.get().serialize(bookStoreResponse);
+		response.getOutputStream().write(serializedResponseContent);
+	}
+
+	/**
+	 * Gets the editor picks.
+	 *
+	 * @param request
+	 *            the request
+	 * @param response
+	 *            the response
+	 * @throws IOException
+	 *             Signals that an I/O exception has occurred.
+	 */
+	private void getEditorPicks(HttpServletRequest request, HttpServletResponse response) throws IOException {
+		String numBooksString = URLDecoder.decode(request.getParameter(BookStoreConstants.BOOK_NUM_PARAM), StandardCharsets.UTF_8);
+		BookStoreResponse bookStoreResponse = new BookStoreResponse();
+
+		try {
+			int numBooks = BookStoreUtility.convertStringToInt(numBooksString);
+			bookStoreResponse.setList(myBookStore.getEditorPicks(numBooks));
+		} catch (BookStoreException ex) {
+			bookStoreResponse.setException(ex);
+		}
+
+		byte[] serializedResponseContent = serializer.get().serialize(bookStoreResponse);
+		response.getOutputStream().write(serializedResponseContent);
+	}
+
+	/**
+	 * Gets the books.
+	 *
+	 * @param request
+	 *            the request
+	 * @param response
+	 *            the response
+	 * @throws IOException
+	 *             Signals that an I/O exception has occurred.
+	 */
+	@SuppressWarnings("unchecked")
+	private void getBooks(HttpServletRequest request, HttpServletResponse response) throws IOException {
+		byte[] serializedRequestContent = getSerializedRequestContent(request);
+
+		Set<Integer> isbnSet = (Set<Integer>) serializer.get().deserialize(serializedRequestContent);
+		BookStoreResponse bookStoreResponse = new BookStoreResponse();
+
+		try {
+			bookStoreResponse.setList(myBookStore.getBooks(isbnSet));
+		} catch (BookStoreException ex) {
+			bookStoreResponse.setException(ex);
+		}
+
+		byte[] serializedResponseContent = serializer.get().serialize(bookStoreResponse);
+		response.getOutputStream().write(serializedResponseContent);
+	}
+
+	/**
+	 * Buys books.
+	 *
+	 * @param request
+	 *            the request
+	 * @param response
+	 *            the response
+	 * @throws IOException
+	 *             Signals that an I/O exception has occurred.
+	 */
+	@SuppressWarnings("unchecked")
+	private void buyBooks(HttpServletRequest request, HttpServletResponse response) throws IOException {
+		byte[] serializedRequestContent = getSerializedRequestContent(request);
+
+		Set<BookCopy> bookCopiesToBuy = (Set<BookCopy>) serializer.get().deserialize(serializedRequestContent);
+		BookStoreResponse bookStoreResponse = new BookStoreResponse();
+
+		try {
+			myBookStore.buyBooks(bookCopiesToBuy);
+		} catch (BookStoreException ex) {
+			bookStoreResponse.setException(ex);
+		}
+
+		byte[] serializedResponseContent = serializer.get().serialize(bookStoreResponse);
+		response.getOutputStream().write(serializedResponseContent);
+	}
+
+	/**
+	 * Updates editor picks.
+	 *
+	 * @param request
+	 *            the request
+	 * @param response
+	 *            the response
+	 * @throws IOException
+	 *             Signals that an I/O exception has occurred.
+	 */
+	@SuppressWarnings("unchecked")
+	private void updateEditorPicks(HttpServletRequest request, HttpServletResponse response) throws IOException {
+		byte[] serializedRequestContent = getSerializedRequestContent(request);
+
+		Set<BookEditorPick> mapEditorPicksValues = (Set<BookEditorPick>) serializer.get()
+				.deserialize(serializedRequestContent);
+		BookStoreResponse bookStoreResponse = new BookStoreResponse();
+
+		try {
+			myBookStore.updateEditorPicks(mapEditorPicksValues);
+		} catch (BookStoreException ex) {
+			bookStoreResponse.setException(ex);
+		}
+
+		byte[] serializedResponseContent = serializer.get().serialize(bookStoreResponse);
+		response.getOutputStream().write(serializedResponseContent);
+	}
+
+	/**
+	 * Lists the books.
+	 *
+	 * @param response
+	 *            the response
+	 * @throws IOException
+	 *             Signals that an I/O exception has occurred.
+	 */
+	private void listBooks(HttpServletResponse response) throws IOException {
+		BookStoreResponse bookStoreResponse = new BookStoreResponse();
+		bookStoreResponse.setList(myBookStore.getBooks());
+
+		byte[] serializedResponseContent = serializer.get().serialize(bookStoreResponse);
+		response.getOutputStream().write(serializedResponseContent);
+	}
+
+	/**
+	 * Adds the copies.
+	 *
+	 * @param request
+	 *            the request
+	 * @param response
+	 *            the response
+	 * @throws IOException
+	 *             Signals that an I/O exception has occurred.
+	 */
+	@SuppressWarnings("unchecked")
+	private void addCopies(HttpServletRequest request, HttpServletResponse response) throws IOException {
+		byte[] serializedRequestContent = getSerializedRequestContent(request);
+
+		Set<BookCopy> listBookCopies = (Set<BookCopy>) serializer.get().deserialize(serializedRequestContent);
+		BookStoreResponse bookStoreResponse = new BookStoreResponse();
+
+		try {
+			myBookStore.addCopies(listBookCopies);
+		} catch (BookStoreException ex) {
+			bookStoreResponse.setException(ex);
+		}
+
+		byte[] serializedResponseContent = serializer.get().serialize(bookStoreResponse);
+		response.getOutputStream().write(serializedResponseContent);
+	}
+
+	/**
+	 * Adds the books.
+	 *
+	 * @param request
+	 *            the request
+	 * @param response
+	 *            the response
+	 * @throws IOException
+	 *             Signals that an I/O exception has occurred.
+	 */
+	@SuppressWarnings("unchecked")
+	private void addBooks(HttpServletRequest request, HttpServletResponse response) throws IOException {
+		byte[] serializedRequestContent = getSerializedRequestContent(request);
+
+		Set<StockBook> newBooks = (Set<StockBook>) serializer.get().deserialize(serializedRequestContent);
+		BookStoreResponse bookStoreResponse = new BookStoreResponse();
+
+		try {
+			myBookStore.addBooks(newBooks);
+		} catch (BookStoreException ex) {
+			bookStoreResponse.setException(ex);
+		}
+
+		byte[] serializedResponseContent = serializer.get().serialize(bookStoreResponse);
+		response.getOutputStream().write(serializedResponseContent);
+	}
+
+	/**
+	 * Removes all books.
+	 *
+	 * @param response
+	 *            the response
+	 * @throws IOException
+	 *             Signals that an I/O exception has occurred.
+	 */
+	private void removeAllBooks(HttpServletResponse response) throws IOException {
+		BookStoreResponse bookStoreResponse = new BookStoreResponse();
+
+		try {
+			myBookStore.removeAllBooks();
+		} catch (BookStoreException ex) {
+			bookStoreResponse.setException(ex);
+		}
+
+		byte[] serializedResponseContent = serializer.get().serialize(bookStoreResponse);
+		response.getOutputStream().write(serializedResponseContent);
+	}
+
+	/**
+	 * Removes the books.
+	 *
+	 * @param request
+	 *            the request
+	 * @param response
+	 *            the response
+	 * @throws IOException
+	 *             Signals that an I/O exception has occurred.
+	 */
+	@SuppressWarnings("unchecked")
+	private void removeBooks(HttpServletRequest request, HttpServletResponse response) throws IOException {
+		byte[] serializedRequestContent = getSerializedRequestContent(request);
+
+		Set<Integer> bookSet = (Set<Integer>) serializer.get().deserialize(serializedRequestContent);
+		BookStoreResponse bookStoreResponse = new BookStoreResponse();
+
+		try {
+			myBookStore.removeBooks(bookSet);
+		} catch (BookStoreException ex) {
+			bookStoreResponse.setException(ex);
+		}
+
+		byte[] serializedResponseContent = serializer.get().serialize(bookStoreResponse);
+		response.getOutputStream().write(serializedResponseContent);
+	}
+
+	/**
+	 * Gets the serialized request content.
+	 *
+	 * @param request the request
+	 * @return the serialized request content
+	 * @throws IOException Signals that an I/O exception has occurred.
+	 */
+	private byte[] getSerializedRequestContent(HttpServletRequest request) throws IOException {
+		Input in = new Input(request.getInputStream());
+		byte[] serializedRequestContent = in.readBytes(request.getContentLength());
+		in.close();
+		return serializedRequestContent;
+	}
+
+	/**
+	 * rate books
+	 *
+	 * @param request the request
+	 * @param response the response
+	 * @throws IOException Signals that an I/O exception has occurred.
+	 */
+	@SuppressWarnings("unchecked")
+	private void rateBooks(HttpServletRequest request, HttpServletResponse response) throws IOException {
+		byte[] serializedRequestContent = getSerializedRequestContent(request);
+
+		Set<BookRating> bookRatings = (Set<BookRating>) serializer.get().deserialize(serializedRequestContent);
+		BookStoreResponse bookStoreResponse = new BookStoreResponse();
+
+		try {
+			myBookStore.rateBooks(bookRatings);
+		} catch (BookStoreException ex) {
+			bookStoreResponse.setException(ex);
+		}
+
+		byte[] serializedResponseContent = serializer.get().serialize(bookStoreResponse);
+		response.getOutputStream().write(serializedResponseContent);
+	}
+
+	/**
+	 * fetches k top rated books
+	 *
+	 * @param request the request
+	 * @param response the response
+	 * @throws IOException Signals that an I/O exception has occurred.
+	 */
+	private void getTopRatedBooks(HttpServletRequest request, HttpServletResponse response) throws IOException {
+		String topRatedBooksString = URLDecoder.decode(request.getParameter(BookStoreConstants.BOOK_NUM_PARAM), StandardCharsets.UTF_8);
+		BookStoreResponse bookStoreResponse = new BookStoreResponse();
+
+		try {
+			int topRateBooks = BookStoreUtility.convertStringToInt(topRatedBooksString);
+			bookStoreResponse.setList(myBookStore.getTopRatedBooks(topRateBooks));
+		} catch (BookStoreException ex) {
+			bookStoreResponse.setException(ex);
+		}
+
+		byte[] serializedResponseContent = serializer.get().serialize(bookStoreResponse);
+		response.getOutputStream().write(serializedResponseContent);
+	}
+
+	private void getBooksInDemand(HttpServletRequest request, HttpServletResponse response) throws IOException {
+		BookStoreResponse bookStoreResponse = new BookStoreResponse();
+
+		try {
+			bookStoreResponse.setList(myBookStore.getBooksInDemand());
+		} catch (BookStoreException ex) {
+			bookStoreResponse.setException(ex);
+		}
+
+		byte[] serializedResponseContent = serializer.get().serialize(bookStoreResponse);
+		response.getOutputStream().write(serializedResponseContent);
+	}
+}
+
+
+## com/acertainbookstore/server/BookStoreHTTPServer.java
+package com.acertainbookstore.server;
+
+import org.eclipse.jetty.util.thread.QueuedThreadPool;
+
+import com.acertainbookstore.business.CertainBookStore;
+import com.acertainbookstore.utils.BookStoreConstants;
+
+/**
+ * Starts the {@link BookStoreHTTPServer} that the clients will communicate
+ * with.
+ */
+public class BookStoreHTTPServer {
+
+	/** The Constant defaultListenOnPort. */
+	private static final int DEFAULT_PORT = 8081;
+	private static final int MIN_THREADPOOL_SIZE = 10;
+	private static final int MAX_THREADPOOL_SIZE = 100;
+
+	/**
+	 * Prevents the instantiation of a new {@link BookStoreHTTPServer}.
+	 */
+	private BookStoreHTTPServer() {
+		// Prevent instances from being created.
+	}
+
+	/**
+	 * The main method.
+	 *
+	 * @param args
+	 *            the arguments
+	 */
+	public static void main(String[] args) {
+		CertainBookStore bookStore = new CertainBookStore();
+		int listenOnPort = DEFAULT_PORT;
+
+		BookStoreHTTPMessageHandler handler = new BookStoreHTTPMessageHandler(bookStore);
+		String serverPortString = System.getProperty(BookStoreConstants.PROPERTY_KEY_SERVER_PORT);
+
+		if (serverPortString != null) {
+			try {
+				listenOnPort = Integer.parseInt(serverPortString);
+			} catch (NumberFormatException ex) {
+				System.err.println("Unsupported message tag");
+			}
+		}
+
+
+		QueuedThreadPool threadpool = new QueuedThreadPool(MAX_THREADPOOL_SIZE, MIN_THREADPOOL_SIZE);
+		BookStoreHTTPServerUtility.createServer(listenOnPort, handler, threadpool);
+	}
+}
+
+
+## com/acertainbookstore/server/BookStoreHTTPServerUtility.java
+package com.acertainbookstore.server;
+
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
+import java.net.UnknownHostException;
+import java.util.Arrays;
+
+import org.eclipse.jetty.server.Server;
+import org.eclipse.jetty.server.ServerConnector;
+import org.eclipse.jetty.server.handler.AbstractHandler;
+import org.eclipse.jetty.util.thread.QueuedThreadPool;
+
+/**
+ * {@link BookStoreHTTPServerUtility} creates Jetty server instances.
+ */
+public class BookStoreHTTPServerUtility {
+
+	/**
+	 * Prevents the instantiation of a new {@link BookStoreHTTPServerUtility}.
+	 */
+	private BookStoreHTTPServerUtility() {
+		// Prevent instances from being created.
+	}
+
+	/**
+	 * Creates a server on the port and blocks the calling thread.
+	 *
+	 * @param port
+	 *            the port
+	 * @param handler
+	 *            the handler
+	 * @return true, if successful
+	 */
+	public static void createServer(int port, AbstractHandler handler, QueuedThreadPool threadpool) {
+		Server server = null;
+		if (threadpool != null) {
+			server = new Server(threadpool);
+			ServerConnector myConnector = new ServerConnector(server);
+			myConnector.setPort(port);
+			server.addConnector(myConnector);
+		} else {
+			server = new Server(port);
+		}
+
+		if (handler != null) {
+			server.setHandler(handler);
+		}
+
+		try {
+			server.start();
+			server.join();
+		} catch (Exception ex) {
+			System.err.println(Arrays.toString(ex.getStackTrace()));
+		}
+
+	}
+
+	/**
+	 * Creates a server on the InetAddress and blocks the calling thread.
+	 *
+	 * @param ipAddress
+	 *            the IP address
+	 * @param port
+	 *            the port
+	 * @param handler
+	 *            the handler
+	 * @return true, if successful
+	 */
+	public static boolean createServer(String ipAddress, int port, AbstractHandler handler) {
+		InetAddress inetIpAddress;
+		InetSocketAddress address;
+		Server server;
+
+		if (ipAddress == null) {
+			return false;
+		}
+
+		try {
+			inetIpAddress = InetAddress.getByName(ipAddress);
+			address = new InetSocketAddress(inetIpAddress, port);
+		} catch (UnknownHostException ex) {
+			System.err.println(ex.getStackTrace());
+			return false;
+		}
+
+		server = new Server(address);
+
+		if (handler != null) {
+			server.setHandler(handler);
+		}
+
+		try {
+			server.start();
+			server.join();
+		} catch (Exception ex) {
+			System.err.println(ex.getStackTrace());
+		}
+
+		return true;
+	}
+}
+
+
+## com/acertainbookstore/utils/BookStoreConstants.java
+package com.acertainbookstore.utils;
+
+/**
+ * BookStoreConstants declares the constants used in the CertainBookStore (by
+ * both servers and clients).
+ */
+public final class BookStoreConstants {
+	// Constants used when creating URLs
+
+	/** The Constant BOOKISBN_PARAMs. */
+	public static final String BOOKISBN_PARAM = "ISBN";
+
+	/** The Constant BOOK_NUM_PARAM. */
+	public static final String BOOK_NUM_PARAM = "number_of_books";
+
+	/**
+	 * The Constant INVALID_PARAMS used as error code when converting numbers to
+	 * integer.
+	 */
+	public static final int INVALID_PARAMS = -1;
+
+	// Constants used when creating exception messages
+
+	/** The Constant INVALID when the book has an invalid ISBN. */
+	public static final String INVALID = " is invalid";
+
+	/** The Constant DUPLICATED when the book is already in the store. */
+	public static final String DUPLICATED = " is duplicated";
+
+	/** The Constant NOT_AVAILABLE when the book is not in the store. */
+	public static final String NOT_AVAILABLE = " is not available";
+
+	/** The Constant BOOK. */
+	public static final String BOOK = "The Book: ";
+
+	/** The Constant ISBN. */
+	public static final String ISBN = "The ISBN: ";
+
+	/** The Constant NUM_COPIES. */
+	public static final String NUM_COPIES = "The Number of copies: ";
+
+	/** The Constant RATING. */
+	public static final String RATING = "The rating: ";
+
+	/** The Constant NULL_INPUT. */
+	public static final String NULL_INPUT = "null input parameters";
+
+	/** The Constant PROPERTY_KEY_LOCAL_TEST. */
+	public static final String PROPERTY_KEY_LOCAL_TEST = "localtest";
+
+	/** The Constant PROPERTY_KEY_SERVER_PORT. */
+	public static final String PROPERTY_KEY_SERVER_PORT = "port";
+
+	/** The Constant EPSILON used for floating point number comparison */
+	public static final float EPSILON = 0.000001F;
+
+	/** The Constant EMPTY. */
+	public static final String EMPTY = "empty";
+
+	/**
+	 * Prevents the instantiation of a new {@link BookStoreConstants}.
+	 */
+	private BookStoreConstants() {
+		// Prevent instantiation.
+	}
+}
+
+
+## com/acertainbookstore/utils/BookStoreException.java
+package com.acertainbookstore.utils;
+
+/**
+ * {@link BookStoreException} signals a book store error.
+ */
+public class BookStoreException extends Exception {
+
+	/** The Constant serialVersionUID. */
+	private static final long serialVersionUID = 1L;
+
+	/**
+	 * Instantiates a new {@link BookStoreException}.
+	 */
+	public BookStoreException() {
+		super();
+	}
+
+	/**
+	 * Instantiates a new {@link BookStoreException}.
+	 *
+	 * @param message
+	 *            the message
+	 */
+	public BookStoreException(String message) {
+		super(message);
+	}
+
+	/**
+	 * Instantiates a new {@link BookStoreException}.
+	 *
+	 * @param message
+	 *            the message
+	 * @param cause
+	 *            the cause
+	 */
+	public BookStoreException(String message, Throwable cause) {
+		super(message, cause);
+	}
+
+	/**
+	 * Instantiates a new {@link BookStoreException}.
+	 *
+	 * @param ex
+	 *            the exception
+	 */
+	public BookStoreException(Throwable ex) {
+		super(ex);
+	}
+}
+
+
+## com/acertainbookstore/utils/BookStoreKryoSerializer.java
+package com.acertainbookstore.utils;
+
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.HashSet;
+
+import com.acertainbookstore.business.ImmutableStockBook;
+import com.acertainbookstore.interfaces.BookStoreSerializer;
+import com.esotericsoftware.kryo.Kryo;
+import com.esotericsoftware.kryo.io.Input;
+import com.esotericsoftware.kryo.io.Output;
+import com.esotericsoftware.kryo.util.DefaultInstantiatorStrategy;
+import org.objenesis.strategy.StdInstantiatorStrategy;
+
+/**
+ * {@link BookStoreKryoSerializer} serializes objects to arrays of bytes
+ * representing strings using the Kryo library.
+ *
+ * @see BookStoreSerializer
+ */
+public final class BookStoreKryoSerializer implements BookStoreSerializer {
+
+	/** The binary stream. */
+	private final Kryo binaryStream;
+
+	/**
+	 * Instantiates a new {@link BookStoreKryoSerializer}.
+	 */
+	public BookStoreKryoSerializer() {
+		binaryStream = new Kryo();
+		binaryStream.setInstantiatorStrategy(new DefaultInstantiatorStrategy(new StdInstantiatorStrategy()));
+
+		// register all classes
+		binaryStream.register(ImmutableStockBook.class);
+		binaryStream.register(HashSet.class);
+		binaryStream.register(BookStoreResponse.class);
+		binaryStream.register(com.acertainbookstore.business.BookCopy.class);
+		binaryStream.register(java.util.ArrayList.class);
+		binaryStream.register(com.acertainbookstore.business.BookEditorPick.class);
+		binaryStream.register(com.acertainbookstore.business.ImmutableBook.class);
+	}
+
+	/*
+	 * (non-Javadoc)
+	 *
+	 * @see
+	 * com.acertainbookstore.interfaces.BookStoreSerializer#serialize(java.lang.
+	 * Object)
+	 */
+	@Override
+	public byte[] serialize(Object object) throws IOException {
+		try (ByteArrayOutputStream outStream = new ByteArrayOutputStream(); Output out = new Output(outStream)) {
+			binaryStream.writeClassAndObject(out, object);
+			out.flush();
+			return outStream.toByteArray();
+		}
+	}
+
+	/*
+	 * (non-Javadoc)
+	 *
+	 * @see com.acertainbookstore.interfaces.BookStoreSerializer#deserialize(byte[])
+	 */
+	@Override
+	public Object deserialize(byte[] bytes) throws IOException {
+		try (InputStream inStream = new ByteArrayInputStream(bytes); Input in = new Input(inStream)) {
+			return binaryStream.readClassAndObject(in);
+		}
+	}
+}
+
+
+## com/acertainbookstore/utils/BookStoreMessageTag.java
+package com.acertainbookstore.utils;
+
+/**
+ * {@link BookStoreMessageTag} implements the messages supported in the
+ * bookstore.
+ */
+public enum BookStoreMessageTag {
+
+	/** The tag for the add book message. */
+	ADDBOOKS,
+
+	/** The tag for the list books message. */
+	LISTBOOKS,
+
+	/** The tag for the add copies message. */
+	ADDCOPIES,
+
+	/** The tag for the get books message. */
+	GETBOOKS,
+
+	/** The tag for the buy books message. */
+	BUYBOOKS,
+
+	/** The tag for the update editor picks message. */
+	UPDATEEDITORPICKS,
+
+	/** The tag for the editor picks message. */
+	GETEDITORPICKS,
+
+	/** The tag for the remove all books message. */
+	REMOVEALLBOOKS,
+
+	/** The tag for the remove books message. */
+	REMOVEBOOKS,
+
+	/** The tag for the get stock books by ISBN message. */
+	GETSTOCKBOOKSBYISBN,
+
+	/** [2.3.2] new tag: rateBooks */
+	RATEBOOKS,
+
+	/** [2.3.2] new tag: getTopRatedBooks */
+	GETTOPRATEDBOOKS,
+
+	/** [2.3.3] new tag; getBooksInDemand */
+	GETBOOKSINDEMAND;
+}
+
+
+## com/acertainbookstore/utils/BookStoreRequest.java
+package com.acertainbookstore.utils;
+
+import org.eclipse.jetty.http.HttpMethod;
+
+/**
+ * {@link BookStoreRequest} is the data structure that encapsulates a HTTP
+ * request from the bookstore client to the server.
+ */
+public final class BookStoreRequest {
+
+	/** The method. */
+	private final HttpMethod method;
+
+	/** The URL string. */
+	private final String urlString;
+
+	/** The input value. */
+	private final Object inputValue;
+
+	/**
+	 * Instantiates a new {@link BookStoreRequest}.
+	 *
+	 * @param method
+	 *            the method
+	 * @param urlString
+	 *            the URL string
+	 * @param inputValue
+	 *            the input value
+	 */
+	private BookStoreRequest(HttpMethod method, String urlString, Object inputValue) {
+		this.method = method;
+		this.urlString = urlString;
+		this.inputValue = inputValue;
+	}
+
+	/**
+	 * Gets the method.
+	 *
+	 * @return the method
+	 */
+	public HttpMethod getMethod() {
+		return method;
+	}
+
+	/**
+	 * Gets the URL string.
+	 *
+	 * @return the URL string
+	 */
+	public String getURLString() {
+		return urlString;
+	}
+
+	/**
+	 * Gets the input value.
+	 *
+	 * @return the input value
+	 */
+	public Object getInputValue() {
+		return inputValue;
+	}
+
+	/**
+	 * Gets a new GET request.
+	 *
+	 * @param urlString
+	 *            the URL string
+	 * @return the book store request
+	 */
+	public static BookStoreRequest newGetRequest(String urlString) {
+		return new BookStoreRequest(HttpMethod.GET, urlString, null);
+	}
+
+	/**
+	 * Gets a new POST request.
+	 *
+	 * @param urlString
+	 *            the URL string
+	 * @param inputValue
+	 *            the input value
+	 * @return the book store request
+	 */
+	public static BookStoreRequest newPostRequest(String urlString, Object inputValue) {
+		return new BookStoreRequest(HttpMethod.POST, urlString, inputValue);
+	}
+}
+
+
+## com/acertainbookstore/utils/BookStoreResponse.java
+package com.acertainbookstore.utils;
+
+import java.util.List;
+
+import com.acertainbookstore.business.Book;
+
+/**
+ * {@link BookStoreResponse} is the data structure that encapsulates a HTTP
+ * response from the bookstore server to the client. The data structure contains
+ * error messages from the server if an error occurred.
+ */
+public class BookStoreResponse {
+
+	/** The exception. */
+	private BookStoreException exception;
+
+	/** The list. */
+	private List<?> list;
+
+	/**
+	 * Instantiates a new {@link BookStoreResponse}.
+	 *
+	 * @param exception
+	 *            the exception
+	 * @param list
+	 *            the list
+	 */
+	public BookStoreResponse(BookStoreException exception, List<Book> list) {
+		this.setException(exception);
+		this.setList(list);
+	}
+
+	/**
+	 * Instantiates a new book store response.
+	 */
+	public BookStoreResponse() {
+		this.setException(null);
+		this.setList(null);
+	}
+
+	/**
+	 * Gets the list.
+	 *
+	 * @return the list
+	 */
+	public List<?> getList() {
+		return list;
+	}
+
+	/**
+	 * Sets the list.
+	 *
+	 * @param list
+	 *            the new list
+	 */
+	public void setList(List<?> list) {
+		this.list = list;
+	}
+
+	/**
+	 * Gets the exception.
+	 *
+	 * @return the exception
+	 */
+	public BookStoreException getException() {
+		return exception;
+	}
+
+	/**
+	 * Sets the exception.
+	 *
+	 * @param exception
+	 *            the new exception
+	 */
+	public void setException(BookStoreException exception) {
+		this.exception = exception;
+	}
+}
+
+
+## com/acertainbookstore/utils/BookStoreUtility.java
+package com.acertainbookstore.utils;
+
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeoutException;
+
+import org.eclipse.jetty.client.HttpClient;
+import org.eclipse.jetty.client.api.ContentProvider;
+import org.eclipse.jetty.client.api.ContentResponse;
+import org.eclipse.jetty.client.api.Request;
+import org.eclipse.jetty.client.util.BytesContentProvider;
+import org.eclipse.jetty.http.HttpHeader;
+import org.eclipse.jetty.http.HttpMethod;
+
+import com.acertainbookstore.client.BookStoreClientConstants;
+import com.acertainbookstore.interfaces.BookStoreSerializer;
+
+/**
+ * {@link BookStoreUtility} implements utility methods used by the bookstore
+ * server and client.
+ */
+public final class BookStoreUtility {
+
+	/** Prevent instantiation. */
+	private BookStoreUtility() {}
+
+	/* ------------------------- static validation helpers ------------------------- */
+
+	public static boolean isInvalidISBN(int isbn) {
+		return isbn < 1;
+	}
+
+	public static boolean isInvalidRating(int rating) {
+		return rating < 0 || rating > 5;
+	}
+
+	public static boolean isInvalidNoCopies(int copies) {
+		return copies < 1;
+	}
+
+	public static boolean isEmpty(String str) {
+		return str == null || str.isEmpty();
+	}
+
+	public static float convertStringToFloat(String str, float failureSignal) {
+		float returnValue = failureSignal;
+		try {
+			returnValue = Float.parseFloat(str);
+		} catch (NumberFormatException | NullPointerException ex) {
+			System.err.println(ex.getMessage());
+		}
+		return returnValue;
+	}
+
+	public static int convertStringToInt(String str) throws BookStoreException {
+		try {
+			return Integer.parseInt(str);
+		} catch (Exception ex) {
+			throw new BookStoreException(ex);
+		}
+	}
+
+	public static BookStoreMessageTag convertURItoMessageTag(String requestURI) {
+		try {
+			return BookStoreMessageTag.valueOf(requestURI.substring(1).toUpperCase());
+		} catch (IllegalArgumentException | NullPointerException ex) {
+			System.err.println(ex.getMessage());
+			return null;
+		}
+	}
+
+	/* --------------------------- HTTP helper method --------------------------- */
+
+	/**
+	 * Sends the request described by {@code bookStoreRequest} using Jetty's
+	 * {@link HttpClient}, deserialises the XML payload with the supplied
+	 * {@link BookStoreSerializer}, and converts server‑side exceptions into
+	 * client‑side {@link BookStoreException}s.
+	 */
+	public static BookStoreResponse performHttpExchange(HttpClient client,
+														BookStoreRequest bookStoreRequest,
+														BookStoreSerializer serializer)
+			throws BookStoreException {
+
+		/* -------- build the outbound HTTP request -------- */
+		Request request;
+		switch (bookStoreRequest.getMethod()) {
+			case GET:
+				request = client.newRequest(bookStoreRequest.getURLString()).method(HttpMethod.GET);
+				break;
+			case POST:
+				try {
+					byte[] bytes = serializer.serialize(bookStoreRequest.getInputValue());
+					ContentProvider cp = new BytesContentProvider(bytes);
+					request = client.POST(bookStoreRequest.getURLString()).content(cp);
+				} catch (IOException ex) {
+					throw new BookStoreException("Serialization error", ex);
+				}
+				break;
+			default:
+				throw new IllegalArgumentException("HTTP Method not supported.");
+		}
+
+		/* -------- send the request and obtain the response -------- */
+		ContentResponse response;
+		try {
+			response = request.send();
+		} catch (InterruptedException ex) {
+			throw new BookStoreException(BookStoreClientConstants.STR_ERR_CLIENT_REQUEST_SENDING, ex);
+		} catch (TimeoutException ex) {
+			throw new BookStoreException(BookStoreClientConstants.STR_ERR_CLIENT_REQUEST_TIMEOUT, ex);
+		} catch (ExecutionException ex) {
+			throw new BookStoreException(BookStoreClientConstants.STR_ERR_CLIENT_REQUEST_EXCEPTION, ex);
+		}
+
+		/* -------- validate response before deserialising -------- */
+		int status = response.getStatus();
+		if (status >= 400) {
+			String body = new String(response.getContent(), StandardCharsets.UTF_8);
+			throw new BookStoreException("Remote server returned HTTP " + status + ":\n" + body);
+		}
+
+		String contentType = response.getHeaders().get(HttpHeader.CONTENT_TYPE);
+		if (contentType != null && contentType.contains("text/html")) {
+			String body = new String(response.getContent(), StandardCharsets.UTF_8);
+			throw new BookStoreException("Expected XML but received HTML:\n" + body);
+		}
+
+		/* -------- safe deserialisation of the (now validated) XML payload -------- */
+		BookStoreResponse bookStoreResponse;
+		try {
+			bookStoreResponse = (BookStoreResponse) serializer.deserialize(response.getContent());
+		} catch (IOException ex) {
+			throw new BookStoreException("Deserialization error", ex);
+		}
+
+		/* -------- propagate any server‑side exceptions back to the caller -------- */
+		BookStoreException exception = bookStoreResponse.getException();
+		if (exception != null) {
+			throw exception;
+		}
+
+		return bookStoreResponse;
+	}
+}
+
+
