@@ -543,6 +543,39 @@ public class BookStoreTest {
 	}
 
 	/**
+	 * initial state, no books in demand.
+	 */
+	@Test
+	public void testGetBooksInDemandEmpty() throws BookStoreException {
+		List<StockBook> inDemand = storeManager.getBooksInDemand();
+		assertTrue(inDemand.isEmpty());
+	}
+
+	/**
+	 * A failed purchase (too many copies requested) should make the book
+	 * appear in the "books in demand" list.
+	 */
+    @Test
+    public void testGetBooksInDemandAfterSaleMiss() throws BookStoreException {
+        // request books -> sale miss
+        Set<BookCopy> booksToBuy = new HashSet<BookCopy>();
+        booksToBuy.add(new BookCopy(TEST_ISBN, NUM_COPIES + 1));
+
+        try {
+            client.buyBooks(booksToBuy);
+            fail("buying too many books");
+        } catch (BookStoreException ex) {}
+
+        // books in demand
+        List<StockBook> inDemand = storeManager.getBooksInDemand();
+        assertEquals(1, inDemand.size());
+
+        StockBook book = inDemand.get(0);
+        assertEquals(TEST_ISBN, book.getISBN());
+        assertTrue(book.getNumSaleMisses() > 0);
+    }
+
+	/**
 	 * Tear down after class.
 	 *
 	 * @throws BookStoreException

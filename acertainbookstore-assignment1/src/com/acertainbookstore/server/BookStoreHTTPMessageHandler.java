@@ -462,6 +462,15 @@ public class BookStoreHTTPMessageHandler extends AbstractHandler {
 	}
 
 	private void getBooksInDemand(HttpServletRequest request, HttpServletResponse response) throws IOException {
+		BookStoreResponse bookStoreResponse = new BookStoreResponse();
 
+		try {
+			bookStoreResponse.setList(myBookStore.getBooksInDemand());
+		} catch (BookStoreException ex) {
+			bookStoreResponse.setException(ex);
+		}
+
+		byte[] serializedResponseContent = serializer.get().serialize(bookStoreResponse);
+		response.getOutputStream().write(serializedResponseContent);
 	}
 }

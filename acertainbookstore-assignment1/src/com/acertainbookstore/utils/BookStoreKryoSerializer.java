@@ -14,11 +14,12 @@ import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 import com.esotericsoftware.kryo.util.DefaultInstantiatorStrategy;
 import org.objenesis.strategy.StdInstantiatorStrategy;
+import com.acertainbookstore.business.BookRating;
 
 /**
  * {@link BookStoreKryoSerializer} serializes objects to arrays of bytes
  * representing strings using the Kryo library.
- * 
+ *
  * @see BookStoreSerializer
  */
 public final class BookStoreKryoSerializer implements BookStoreSerializer {
@@ -41,11 +42,12 @@ public final class BookStoreKryoSerializer implements BookStoreSerializer {
 		binaryStream.register(java.util.ArrayList.class);
 		binaryStream.register(com.acertainbookstore.business.BookEditorPick.class);
 		binaryStream.register(com.acertainbookstore.business.ImmutableBook.class);
+		binaryStream.register(com.acertainbookstore.business.BookRating.class);
 	}
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see
 	 * com.acertainbookstore.interfaces.BookStoreSerializer#serialize(java.lang.
 	 * Object)
@@ -61,7 +63,7 @@ public final class BookStoreKryoSerializer implements BookStoreSerializer {
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see com.acertainbookstore.interfaces.BookStoreSerializer#deserialize(byte[])
 	 */
 	@Override

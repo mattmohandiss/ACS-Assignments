@@ -1,21 +1,57 @@
-* You are a tutor assisting a student with their Java programming assignment.
-* You will never provide direct solutions or code snippets.
-* Instead, guide the student through explanations, hints, and questions to help them understand the concepts.
-* It is ok to provide working code examples, but only if the student is clearly stuck and requests them.
-* The following files have been collected from the student's project directory.
+Why is the test below failing when i test it over HTTP?
 
 ##################################
 ## TASK DESCRIPTION
 ##################################
-Update the com.acertainbookstore.server.BookStoreHTTPMessageHandler
-and com.acertainbookstore.client.StockManagerHTTPProxy classes with the
-required HTTP communication code to expose the above method via RPC. For
-guidance, refer to other implemented methods.
+1) testRateBooksSingleValidRating(com.acertainbookstore.client.tests.BookStoreTest)
+java.lang.IllegalArgumentException: Class is not registered: com.acertainbookstore.business.BookRating
+Note: To register this class use: kryo.register(com.acertainbookstore.business.BookRating.class);
+        at com.esotericsoftware.kryo.Kryo.getRegistration(Kryo.java:579)
+        at com.esotericsoftware.kryo.util.DefaultClassResolver.writeClass(DefaultClassResolver.java:112)
+        at com.esotericsoftware.kryo.Kryo.writeClass(Kryo.java:613)
+        at com.esotericsoftware.kryo.serializers.CollectionSerializer.write(CollectionSerializer.java:141)
+        at com.esotericsoftware.kryo.serializers.CollectionSerializer.write(CollectionSerializer.java:44)
+        at com.esotericsoftware.kryo.Kryo.writeClassAndObject(Kryo.java:711)
+        at com.acertainbookstore.utils.BookStoreKryoSerializer.serialize(BookStoreKryoSerializer.java:56)
+        at com.acertainbookstore.utils.BookStoreUtility.performHttpExchange(BookStoreUtility.java:94)
+        at com.acertainbookstore.client.BookStoreHTTPProxy.rateBooks(BookStoreHTTPProxy.java:152)
+        at com.acertainbookstore.client.tests.BookStoreTest.testRateBooksSingleValidRating(BookStoreTest.java:373)
+        at java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(DirectMethodHandleAccessor.java:104)
+        at java.base/java.lang.reflect.Method.invoke(Method.java:565)
+        at org.junit.runners.model.FrameworkMethod$1.runReflectiveCall(FrameworkMethod.java:50)
+        at org.junit.internal.runners.model.ReflectiveCallable.run(ReflectiveCallable.java:12)
+        at org.junit.runners.model.FrameworkMethod.invokeExplosively(FrameworkMethod.java:47)
+        at org.junit.internal.runners.statements.InvokeMethod.evaluate(InvokeMethod.java:17)
+        at org.junit.internal.runners.statements.RunBefores.evaluate(RunBefores.java:26)
+        at org.junit.internal.runners.statements.RunAfters.evaluate(RunAfters.java:27)
+        at org.junit.runners.ParentRunner.runLeaf(ParentRunner.java:325)
+        at org.junit.runners.BlockJUnit4ClassRunner.runChild(BlockJUnit4ClassRunner.java:78)
+        at org.junit.runners.BlockJUnit4ClassRunner.runChild(BlockJUnit4ClassRunner.java:57)
+        at org.junit.runners.ParentRunner$3.run(ParentRunner.java:290)
+        at org.junit.runners.ParentRunner$1.schedule(ParentRunner.java:71)
+        at org.junit.runners.ParentRunner.runChildren(ParentRunner.java:288)
+        at org.junit.runners.ParentRunner.access$000(ParentRunner.java:58)
+        at org.junit.runners.ParentRunner$2.evaluate(ParentRunner.java:268)
+        at org.junit.internal.runners.statements.RunBefores.evaluate(RunBefores.java:26)
+        at org.junit.internal.runners.statements.RunAfters.evaluate(RunAfters.java:27)
+        at org.junit.runners.ParentRunner.run(ParentRunner.java:363)
+        at org.junit.runners.Suite.runChild(Suite.java:128)
+        at org.junit.runners.Suite.runChild(Suite.java:27)
+        at org.junit.runners.ParentRunner$3.run(ParentRunner.java:290)
+        at org.junit.runners.ParentRunner$1.schedule(ParentRunner.java:71)
+        at org.junit.runners.ParentRunner.runChildren(ParentRunner.java:288)
+        at org.junit.runners.ParentRunner.access$000(ParentRunner.java:58)
+        at org.junit.runners.ParentRunner$2.evaluate(ParentRunner.java:268)
+        at org.junit.runners.ParentRunner.run(ParentRunner.java:363)
+        at org.junit.runner.JUnitCore.run(JUnitCore.java:137)
+        at org.junit.runner.JUnitCore.run(JUnitCore.java:115)
+        at org.junit.runner.JUnitCore.runMain(JUnitCore.java:77)
+        at org.junit.runner.JUnitCore.main(JUnitCore.java:36)
 
 ##################################
 ## ADDED IMPLEMENTATION
 ##################################
-* I already added the msg tag for getBooksInDemand (GETBOOKSINDEMAND).
+
 
 ##################################
 ## JAVA PROJECT
@@ -1686,6 +1722,7 @@ import org.eclipse.jetty.util.thread.QueuedThreadPool;
 
 import com.acertainbookstore.business.BookCopy;
 import com.acertainbookstore.business.BookEditorPick;
+import com.acertainbookstore.business.CertainBookStore;
 import com.acertainbookstore.business.StockBook;
 import com.acertainbookstore.utils.BookStoreKryoSerializer;
 import com.acertainbookstore.interfaces.BookStoreSerializer;
@@ -1817,8 +1854,14 @@ public class StockManagerHTTPProxy implements StockManager {
 	 * @see com.acertainbookstore.interfaces.StockManager#getBooksInDemand()
 	 */
 	@Override
+	@SuppressWarnings("unchecked")
 	public List<StockBook> getBooksInDemand() throws BookStoreException {
-		throw new BookStoreException("Not implemented");
+		String urlString = serverAddress + "/" + BookStoreMessageTag.GETBOOKSINDEMAND;
+
+		BookStoreRequest bookStoreRequest = BookStoreRequest.newGetRequest(urlString);
+		BookStoreResponse bookStoreResponse = BookStoreUtility.performHttpExchange(client, bookStoreRequest, serializer.get());
+
+		return (List<StockBook>) bookStoreResponse.getList();
 	}
 
 	/*
@@ -2421,6 +2464,39 @@ public class BookStoreTest {
 		assertTrue(booksInStorePreTest.containsAll(booksInStorePostTest)
 				&& booksInStorePreTest.size() == booksInStorePostTest.size());
 	}
+
+	/**
+	 * initial state, no books in demand.
+	 */
+	@Test
+	public void testGetBooksInDemandEmpty() throws BookStoreException {
+		List<StockBook> inDemand = storeManager.getBooksInDemand();
+		assertTrue(inDemand.isEmpty());
+	}
+
+	/**
+	 * A failed purchase (too many copies requested) should make the book
+	 * appear in the "books in demand" list.
+	 */
+    @Test
+    public void testGetBooksInDemandAfterSaleMiss() throws BookStoreException {
+        // request books -> sale miss
+        Set<BookCopy> booksToBuy = new HashSet<BookCopy>();
+        booksToBuy.add(new BookCopy(TEST_ISBN, NUM_COPIES + 1));
+
+        try {
+            client.buyBooks(booksToBuy);
+            fail("buying too many books");
+        } catch (BookStoreException ex) {}
+
+        // books in demand
+        List<StockBook> inDemand = storeManager.getBooksInDemand();
+        assertEquals(1, inDemand.size());
+
+        StockBook book = inDemand.get(0);
+        assertEquals(TEST_ISBN, book.getISBN());
+        assertTrue(book.getNumSaleMisses() > 0);
+    }
 
 	/**
 	 * Tear down after class.
@@ -3261,12 +3337,19 @@ public class BookStoreHTTPMessageHandler extends AbstractHandler {
 				getStockBooksByISBN(request, response);
 				break;
 
+			// [2.3.2]
 			case RATEBOOKS:
 				rateBooks(request, response);
 				break;
 
+			// [2.3.2]
 			case GETTOPRATEDBOOKS:
 				getTopRatedBooks(request, response);
+				break;
+
+			// [2.3.3]
+			case GETBOOKSINDEMAND:
+				getBooksInDemand(request, response);
 				break;
 
 			default:
@@ -3583,6 +3666,19 @@ public class BookStoreHTTPMessageHandler extends AbstractHandler {
 		try {
 			int topRateBooks = BookStoreUtility.convertStringToInt(topRatedBooksString);
 			bookStoreResponse.setList(myBookStore.getTopRatedBooks(topRateBooks));
+		} catch (BookStoreException ex) {
+			bookStoreResponse.setException(ex);
+		}
+
+		byte[] serializedResponseContent = serializer.get().serialize(bookStoreResponse);
+		response.getOutputStream().write(serializedResponseContent);
+	}
+
+	private void getBooksInDemand(HttpServletRequest request, HttpServletResponse response) throws IOException {
+		BookStoreResponse bookStoreResponse = new BookStoreResponse();
+
+		try {
+			bookStoreResponse.setList(myBookStore.getBooksInDemand());
 		} catch (BookStoreException ex) {
 			bookStoreResponse.setException(ex);
 		}
