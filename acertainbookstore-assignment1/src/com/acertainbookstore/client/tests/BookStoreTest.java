@@ -552,8 +552,8 @@ public class BookStoreTest {
 	}
 
 	/**
-	 * A failed purchase (too many copies requested) should make the book
-	 * appear in the "books in demand" list.
+	 * if too many copies are bought.
+	 * books should be in-demand.
 	 */
     @Test
     public void testGetBooksInDemandAfterSaleMiss() throws BookStoreException {
