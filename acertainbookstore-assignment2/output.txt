@@ -1,53 +1,43 @@
 * You are a tutor assisting a student with their Java programming assignment.
-* Lets just start with implementing the tests below.
+* You will never provide direct solutions or code snippets.
+  - Only provide code and snippets if i explicitely ask for it.
+* Instead, guide the student through explanations, hints, and questions to help them understand the concepts.
 
 ##################################
 ## TASK DESCRIPTION
 ##################################
-# Learning Goals
-This assignment pertains to the following learning goals:
-* Design concurrency control mechanisms that ensure atomic operations, and argue for the correctness of these mechanisms by showing equivalence to a 2PL variant, while considering predicate reads, deadlocks, and the amount of concurrency achieved.
-* Implement a concrete locking strategy in a modular service that guarantees atomic operations in multithreaded execution.
+# Implement two locking protocols for SingleLockConcurrentCertainBookStore and TwoLevelLockingConcurrentCertainBookStore
+The interface methods in the SingleLockConcurrentCertainBookStore and TwoLevelLockingConcurrentCertainBookStore classes are implemented (except for rateBooks, getTopRatedBooks,
+and getBooksInDemand, which you may ignore). You should make the implemented methods thread-safe by maintaining their semantics and ensuring before-or-after atomicity. You
+should aim at increasing the concurrency by guaranteeing that:
+* Read operations for the same object do not block each other.
+* A locking protocol is used as a concurrency control mechanism.
+* Each method satisfies all-or-nothing semantics (i.e., either completes fully or rolls back) for expected, application-level checked exceptions (i.e., events that disrupt program flow
+and that the program anticipates), but not for unanticipated runtime exceptions (e.g., crashes); the service may fail if a runtime exception occurs, but your concurrencycontrol implementation must not introduce runtime exceptions.
 
-# Programming Task: A Concurrent Certain Bookstore
-The team of acertainbookstore.com has had success and their bookstore service has become immensely popular. In effect, many clients request services from the bookstore. The
-team has assigned you the responsibility to increase concurrency in the implemented interfaces without violating application semantics. Every operation in the service should respect
-before-or-after atomicity: the results of executing operations concurrently in multiple threads
-should be equivalent to the results of some serial order of execution of the same operations.
-You are provided with two classes, SingleLockConcurrentCertainBookStore and TwoLevelLockingConcurrentCertainBookStore, which are almost the same as the CertainBookStore
-class used in Programming Assignment 1. The difference is that the synchronized keyword, which ensures mutual exclusion, has been removed from the method signatures. Your
-task is to design and implement two lock-based concurrency control protocols that ensure
-before-or-after atomicity while allowing for greater concurrency for improved performance.
-While we are using the same underlying code base, each assignment is independent.
-In Programming Assignment 2, you can (and should) leave the functionality for rateBooks,
-getTopRatedBooks, and getBooksInDemand, discussed in Programming Assignment 1, unimplemented. Making the locking protocol work with these extra methods is optional.
+In SingleLockConcurrentCertainBookStore, use a single read-write lock for the entire
+database, acquiring it in shared mode (allowing multiple readers) for read-only operations
+and in exclusive mode (allowing only one thread) for operations that write. In TwoLevelLockingConcurrentCertainBookStore, use a two-level strategy: At the top level, employ a
+read-write lock to simulate intention locks (signals that finer-grained locks will be acquired
+later), taken in exclusive mode for inserts or deletes and in shared mode for other operations.
+At the bottom level, each item (or, optionally, group of items) should have its own read-write
+lock, acquired in shared mode for reads and exclusive mode for writes.
 
-# Implementation
-## Create tests for your concurrent implementation
-As always at acertainbookstore.com, test-driven development is encouraged. To focus on
-concurrency, you are asked to prepare a set of local tests: clients run in separate threads,
-yet share the same thread-safe service object; they execute in the same address space
-as the SingleLockConcurrentCertainBookStore or TwoLevelLockingConcurrentCertainBookStore services, and still access the service exclusively through the BookStore and StockManager interfaces.
-The team at acertainbookstore.com has described two test cases that they believe are
-important for the concurrent implementation:
+For each solution, explain how your locking protocol works, including any extra data
+structures, the types of locks used, and the rules for acquiring and releasing them. In the
+discussion questions, justify why your protocol achieves before-or-after atomicity. Your work
+will be evaluated on correctness, achieved concurrency level, and the quality of justification.
 
-* Test 1: Two clients C1 and C2, running in different threads, each invoke a fixed number
-of operations, configured by a parameter, against the BookStore and StockManager
-interfaces. Both C1 and C2 operate against the same set of books S. C1 calls
-buyBooks, while C2 calls addCopies on S. The initial state should have a sufficient
-number of copies in stock to execute the fixed number of operations. In the end, S
-should end with the same number of copies in stock as they started. Otherwise, the test
-fails, indicating that operations that perform conflicting writes to S were not atomic
+## Tip 1
+Start with the simplest protocol that achieves the requirements, even if it provides
+less concurrency, e.g., by implementing the SingleLockConcurrentCertainBookStore class.
+Then make a second pass, e.g., by implementing the TwoLevelLockingConcurrentCertainBookStore class. Thereby, you will gain experience with an implementation you can reason
+about, and also have something working (hopefully) quickly. If something unexpected occurs,
+this strategy will yield a partial solution that you can hand in on time.
 
-* Test 2: Two clients C1 and C2, running in different threads, continuously invoke operations against the BookStore and StockManager interfaces. C1 invokes buyBooks to
-buy a given fixed collection of books (e.g., the Star Wars trilogy). C1 then invokes
-addCopies to replenish the stock of the bought books. C2 continuously calls getBooks,
-ensuring that the returned snapshot either has the quantities for all books in the given
-collection as if they had just been bought or as if they had just been replenished. In
-other words, the snapshots returned by getBooks must be consistent. The test fails
-if an inconsistent snapshot is observed, and succeeds after a large enough number of
-invocations of getBooks, configured as a parameter.
-
+## Tip 2
+You are encouraged to use the java.util.concurrent.* classes. You might find
+java.util.concurrent.locks.ReadWriteLock useful for locks.
 
 ##################################
 ## ADDED IMPLEMENTATION
@@ -73,6 +63,7 @@ Found files:
 - com/acertainbookstore/client/BookStoreHTTPProxy.java
 - com/acertainbookstore/client/StockManagerHTTPProxy.java
 - com/acertainbookstore/client/tests/BookStoreTest.java
+- com/acertainbookstore/client/tests/ConcurrentBookStoreTest.java
 - com/acertainbookstore/client/tests/StockManagerTest.java
 - com/acertainbookstore/interfaces/BookStore.java
 - com/acertainbookstore/interfaces/BookStoreSerializer.java
@@ -92,78 +83,79 @@ Found files:
 
 ## File Structure (Matched Files)
 └── com
-	└── acertainbookstore
-		├── business
-		│   ├── Book.java
-		│   ├── BookCopy.java
-		│   ├── BookEditorPick.java
-		│   ├── BookRating.java
-		│   ├── BookStoreBook.java
-		│   ├── ImmutableBook.java
-		│   ├── ImmutableStockBook.java
-		│   ├── SingleLockConcurrentCertainBookStore.java
-		│   ├── StockBook.java
-		│   └── TwoLevelLockingConcurrentCertainBookStore.java
-		├── client
-		│   ├── BookStoreClientConstants.java
-		│   ├── BookStoreHTTPProxy.java
-		│   ├── StockManagerHTTPProxy.java
-		│   └── tests
-		│       ├── BookStoreTest.java
-		│       └── StockManagerTest.java
-		├── interfaces
-		│   ├── BookStore.java
-		│   ├── BookStoreSerializer.java
-		│   └── StockManager.java
-		├── server
-		│   ├── BookStoreHTTPMessageHandler.java
-		│   ├── BookStoreHTTPServer.java
-		│   └── BookStoreHTTPServerUtility.java
-		└── utils
-			├── BookStoreConstants.java
-			├── BookStoreException.java
-			├── BookStoreKryoSerializer.java
-			├── BookStoreMessageTag.java
-			├── BookStoreRequest.java
-			├── BookStoreResponse.java
-			├── BookStoreUtility.java
-			└── BookStoreXStreamSerializer.java
+    └── acertainbookstore
+        ├── business
+        │   ├── Book.java
+        │   ├── BookCopy.java
+        │   ├── BookEditorPick.java
+        │   ├── BookRating.java
+        │   ├── BookStoreBook.java
+        │   ├── ImmutableBook.java
+        │   ├── ImmutableStockBook.java
+        │   ├── SingleLockConcurrentCertainBookStore.java
+        │   ├── StockBook.java
+        │   └── TwoLevelLockingConcurrentCertainBookStore.java
+        ├── client
+        │   ├── BookStoreClientConstants.java
+        │   ├── BookStoreHTTPProxy.java
+        │   ├── StockManagerHTTPProxy.java
+        │   └── tests
+        │       ├── BookStoreTest.java
+        │       ├── ConcurrentBookStoreTest.java
+        │       └── StockManagerTest.java
+        ├── interfaces
+        │   ├── BookStore.java
+        │   ├── BookStoreSerializer.java
+        │   └── StockManager.java
+        ├── server
+        │   ├── BookStoreHTTPMessageHandler.java
+        │   ├── BookStoreHTTPServer.java
+        │   └── BookStoreHTTPServerUtility.java
+        └── utils
+            ├── BookStoreConstants.java
+            ├── BookStoreException.java
+            ├── BookStoreKryoSerializer.java
+            ├── BookStoreMessageTag.java
+            ├── BookStoreRequest.java
+            ├── BookStoreResponse.java
+            ├── BookStoreUtility.java
+            └── BookStoreXStreamSerializer.java
 
 ## com/acertainbookstore/business/Book.java
 package com.acertainbookstore.business;
 
 /**
-* {@link Book} implements the book data-structure that a bookstore client works
-* with.
-*/
+ * {@link Book} implements the book data-structure that a bookstore client works
+ * with.
+ */
 public interface Book {
 
 	/**
-	* Gets the ISBN of the {@link Book}.
-	*
-	* @return the ISBN
-	*/
+	 * Gets the ISBN of the {@link Book}.
+	 *
+	 * @return the ISBN
+	 */
 	public int getISBN();
 
 	/**
-	* Gets the title of the {@link Book}.
-	*
-	* @return the title
-	*/
+	 * Gets the title of the {@link Book}.
+	 *
+	 * @return the title
+	 */
 	public String getTitle();
 
 	/**
-	* Gets the author of the {@link Book}.
-	*
-	* @return the author
-	*/
+	 * Gets the author of the {@link Book}.
+	 *
+	 * @return the author
+	 */
 	public String getAuthor();
 
 	/**
-	* Gets the price of the {@link Book}.
-	*
-	* @return the price
-	*/
+	 * Gets the price of the {@link Book}.
+	 *
+	 * @return the price
+	 */
 	public float getPrice();
 }
 
@@ -172,8 +164,8 @@ public interface Book {
 package com.acertainbookstore.business;
 
 /**
-* {@link BookCopy} is used to represent the book and its number of copies.
-*/
+ * {@link BookCopy} is used to represent the book and its number of copies.
+ */
 public class BookCopy {
 
 	/** The ISBN. */
@@ -183,62 +175,62 @@ public class BookCopy {
 	private int numCopies;
 
 	/**
-	* Instantiates a new {@link BookCopy} with <code>numCopies</code> book
-	* copies of <code>ISBN</code>.
-	*
-	* @param isbn
-	*            the ISBN
-	* @param numCopies
-	*            the number of copies
-	*/
+	 * Instantiates a new {@link BookCopy} with <code>numCopies</code> book
+	 * copies of <code>ISBN</code>.
+	 *
+	 * @param isbn
+	 *            the ISBN
+	 * @param numCopies
+	 *            the number of copies
+	 */
 	public BookCopy(int isbn, int numCopies) {
 		this.setISBN(isbn);
 		this.setNumCopies(numCopies);
 	}
 
 	/**
-	* Gets the ISBN of the book.
-	*
-	* @return the ISBN
-	*/
+	 * Gets the ISBN of the book.
+	 *
+	 * @return the ISBN
+	 */
 	public int getISBN() {
 		return isbn;
 	}
 
 	/**
-	* Gets the number of book copies.
-	*
-	* @return the number of copies
-	*/
+	 * Gets the number of book copies.
+	 *
+	 * @return the number of copies
+	 */
 	public int getNumCopies() {
 		return numCopies;
 	}
 
 	/**
-	* Sets the ISBN of the book.
-	*
-	* @param isbn
-	*            the new ISBN
-	*/
+	 * Sets the ISBN of the book.
+	 *
+	 * @param isbn
+	 *            the new ISBN
+	 */
 	public void setISBN(int isbn) {
 		this.isbn = isbn;
 	}
 
 	/**
-	* Sets the number of book copies.
-	*
-	* @param numCopies
-	*            the new number of copies
-	*/
+	 * Sets the number of book copies.
+	 *
+	 * @param numCopies
+	 *            the new number of copies
+	 */
 	public void setNumCopies(int numCopies) {
 		this.numCopies = numCopies;
 	}
 
 	/*
-	* (non-Javadoc)
-	*
-	* @see java.lang.Object#equals(java.lang.Object)
-	*/
+	 * (non-Javadoc)
+	 *
+	 * @see java.lang.Object#equals(java.lang.Object)
+	 */
 	@Override
 	public boolean equals(Object obj) {
 		if (obj == null || getClass() != obj.getClass()) {
@@ -249,10 +241,10 @@ public class BookCopy {
 	}
 
 	/*
-	* (non-Javadoc)
-	*
-	* @see java.lang.Object#hashCode()
-	*/
+	 * (non-Javadoc)
+	 *
+	 * @see java.lang.Object#hashCode()
+	 */
 	@Override
 	public int hashCode() {
 		return getISBN();
@@ -264,9 +256,9 @@ public class BookCopy {
 package com.acertainbookstore.business;
 
 /**
-* {@link BookEditorPick} is used to represent the book with its editor picked
-* status.
-*/
+ * {@link BookEditorPick} is used to represent the book with its editor picked
+ * status.
+ */
 public class BookEditorPick {
 
 	/** The ISBN. */
@@ -276,62 +268,62 @@ public class BookEditorPick {
 	private boolean editorPick;
 
 	/**
-	* Instantiates a new {@link BookEditorPick} with the
-	* <code>editorPick</code> status and <code>ISBN</code>.
-	*
-	* @param isbn
-	*            the ISBN
-	* @param editorPick
-	*            whether the book is editor picked
-	*/
+	 * Instantiates a new {@link BookEditorPick} with the
+	 * <code>editorPick</code> status and <code>ISBN</code>.
+	 *
+	 * @param isbn
+	 *            the ISBN
+	 * @param editorPick
+	 *            whether the book is editor picked
+	 */
 	public BookEditorPick(int isbn, boolean editorPick) {
 		this.setISBN(isbn);
 		this.setEditorPick(editorPick);
 	}
 
 	/**
-	* Gets the ISBN.
-	*
-	* @return the ISBN
-	*/
+	 * Gets the ISBN.
+	 *
+	 * @return the ISBN
+	 */
 	public int getISBN() {
 		return isbn;
 	}
 
 	/**
-	* Sets the ISBN.
-	*
-	* @param isbn
-	*            the new ISBN
-	*/
+	 * Sets the ISBN.
+	 *
+	 * @param isbn
+	 *            the new ISBN
+	 */
 	public void setISBN(int isbn) {
 		this.isbn = isbn;
 	}
 
 	/**
-	* Checks whether the book is editor picked.
-	*
-	* @return true, if the book is editor picked
-	*/
+	 * Checks whether the book is editor picked.
+	 *
+	 * @return true, if the book is editor picked
+	 */
 	public boolean isEditorPick() {
 		return editorPick;
 	}
 
 	/**
-	* Sets whether the book is editor picked.
-	*
-	* @param editorPick
-	*            whether the book is editor picked
-	*/
+	 * Sets whether the book is editor picked.
+	 *
+	 * @param editorPick
+	 *            whether the book is editor picked
+	 */
 	public void setEditorPick(boolean editorPick) {
 		this.editorPick = editorPick;
 	}
 
 	/*
-	* (non-Javadoc)
-	*
-	* @see java.lang.Object#equals(java.lang.Object)
-	*/
+	 * (non-Javadoc)
+	 *
+	 * @see java.lang.Object#equals(java.lang.Object)
+	 */
 	@Override
 	public boolean equals(Object obj) {
 		if (obj == null || getClass() != obj.getClass()) {
@@ -342,10 +334,10 @@ public class BookEditorPick {
 	}
 
 	/*
-	* (non-Javadoc)
-	*
-	* @see java.lang.Object#hashCode()
-	*/
+	 * (non-Javadoc)
+	 *
+	 * @see java.lang.Object#hashCode()
+	 */
 	@Override
 	public int hashCode() {
 		return getISBN();
@@ -357,8 +349,8 @@ public class BookEditorPick {
 package com.acertainbookstore.business;
 
 /**
-* {@link BookRating} is used to represent the book with its rating.
-*/
+ * {@link BookRating} is used to represent the book with its rating.
+ */
 public class BookRating {
 
 	/** The ISBN. */
@@ -368,62 +360,62 @@ public class BookRating {
 	private int rating;
 
 	/**
-	* Instantiates a new {@link BookRating} representing the
-	* <code>rating</code> of the book with the given <code>ISBN</code>.
-	*
-	* @param isbn
-	*            the ISBN
-	* @param rating
-	*            the rating
-	*/
+	 * Instantiates a new {@link BookRating} representing the
+	 * <code>rating</code> of the book with the given <code>ISBN</code>.
+	 *
+	 * @param isbn
+	 *            the ISBN
+	 * @param rating
+	 *            the rating
+	 */
 	public BookRating(int isbn, int rating) {
 		this.setISBN(isbn);
 		this.setRating(rating);
 	}
 
 	/**
-	* Gets the ISBN of the book.
-	*
-	* @return the ISBN
-	*/
+	 * Gets the ISBN of the book.
+	 *
+	 * @return the ISBN
+	 */
 	public int getISBN() {
 		return isbn;
 	}
 
 	/**
-	* Sets the ISBN of the book.
-	*
-	* @param iSBN
-	*            the new ISBN
-	*/
+	 * Sets the ISBN of the book.
+	 *
+	 * @param iSBN
+	 *            the new ISBN
+	 */
 	public void setISBN(int isbn) {
 		this.isbn = isbn;
 	}
 
 	/**
-	* Gets the rating of the book.
-	*
-	* @return the rating
-	*/
+	 * Gets the rating of the book.
+	 *
+	 * @return the rating
+	 */
 	public int getRating() {
 		return rating;
 	}
 
 	/**
-	* Sets the rating of the book.
-	*
-	* @param rating
-	*            the new rating
-	*/
+	 * Sets the rating of the book.
+	 *
+	 * @param rating
+	 *            the new rating
+	 */
 	public void setRating(int rating) {
 		this.rating = rating;
 	}
 
 	/*
-	* (non-Javadoc)
-	*
-	* @see java.lang.Object#equals(java.lang.Object)
-	*/
+	 * (non-Javadoc)
+	 *
+	 * @see java.lang.Object#equals(java.lang.Object)
+	 */
 	@Override
 	public boolean equals(Object obj) {
 		if (obj == null || getClass() != obj.getClass()) {
@@ -434,10 +426,10 @@ public class BookRating {
 	}
 
 	/*
-	* (non-Javadoc)
-	*
-	* @see java.lang.Object#hashCode()
-	*/
+	 * (non-Javadoc)
+	 *
+	 * @see java.lang.Object#hashCode()
+	 */
 	@Override
 	public int hashCode() {
 		return getISBN();
@@ -451,14 +443,14 @@ package com.acertainbookstore.business;
 import com.acertainbookstore.utils.BookStoreUtility;
 
 /**
-* {@link BookStoreBook} implements all parts of the book. Only parts of it are
-* available in the bookstore client and stock manager, cf. the {@link Book} and
-* {@link StockBook} interfaces.
-*
-* @see Book
-* @see StockBook
-* @see ImmutableBook
-*/
+ * {@link BookStoreBook} implements all parts of the book. Only parts of it are
+ * available in the bookstore client and stock manager, cf. the {@link Book} and
+ * {@link StockBook} interfaces.
+ *
+ * @see Book
+ * @see StockBook
+ * @see ImmutableBook
+ */
 public class BookStoreBook extends ImmutableBook {
 
 	/** The number of copies. */
@@ -477,19 +469,19 @@ public class BookStoreBook extends ImmutableBook {
 	private boolean editorPick;
 
 	/**
-	* Instantiates a new {@link BookStoreBook}.
-	*
-	* @param isbn
-	*            the ISBN
-	* @param title
-	*            the title
-	* @param author
-	*            the author
-	* @param price
-	*            the price
-	* @param numCopies
-	*            the number of copies
-	*/
+	 * Instantiates a new {@link BookStoreBook}.
+	 *
+	 * @param isbn
+	 *            the ISBN
+	 * @param title
+	 *            the title
+	 * @param author
+	 *            the author
+	 * @param price
+	 *            the price
+	 * @param numCopies
+	 *            the number of copies
+	 */
 	public BookStoreBook(int isbn, String title, String author, float price, int numCopies) {
 		super(isbn, title, author, price);
 
@@ -501,12 +493,12 @@ public class BookStoreBook extends ImmutableBook {
 	}
 
 	/**
-	* Instantiates a new {@link BookStoreBook} from a {@link StockBook}
-	* instance.
-	*
-	* @param bookToCopy
-	*            the book to copy
-	*/
+	 * Instantiates a new {@link BookStoreBook} from a {@link StockBook}
+	 * instance.
+	 *
+	 * @param bookToCopy
+	 *            the book to copy
+	 */
 	public BookStoreBook(StockBook bookToCopy) {
 		super(bookToCopy.getISBN(), bookToCopy.getTitle(), bookToCopy.getAuthor(), bookToCopy.getPrice());
 
@@ -518,129 +510,129 @@ public class BookStoreBook extends ImmutableBook {
 	}
 
 	/**
-	* Gets the total rating.
-	*
-	* @return the total rating
-	*/
+	 * Gets the total rating.
+	 *
+	 * @return the total rating
+	 */
 	public long getTotalRating() {
 		return totalRating;
 	}
 
 	/**
-	* Gets the number of times rated.
-	*
-	* @return the number of times rated
-	*/
+	 * Gets the number of times rated.
+	 *
+	 * @return the number of times rated
+	 */
 	public long getNumTimesRated() {
 		return numTimesRated;
 	}
 
 	/**
-	* Gets the number of copies.
-	*
-	* @return the number of copies
-	*/
+	 * Gets the number of copies.
+	 *
+	 * @return the number of copies
+	 */
 	public int getNumCopies() {
 		return numCopies;
 	}
 
 	/**
-	* Gets the number of sale misses.
-	*
-	* @return the number of sale misses
-	*/
+	 * Gets the number of sale misses.
+	 *
+	 * @return the number of sale misses
+	 */
 	public long getNumSaleMisses() {
 		return numSaleMisses;
 	}
 
 	/**
-	* Gets the average rating.
-	*
-	* @return the average rating
-	*/
+	 * Gets the average rating.
+	 *
+	 * @return the average rating
+	 */
 	public float getAverageRating() {
 		return (numTimesRated == 0 ? -1.0f : (float) totalRating / numTimesRated);
 	}
 
 	/**
-	* Checks if the book is editor picked.
-	*
-	* @return true, if it is editor picked
-	*/
+	 * Checks if the book is editor picked.
+	 *
+	 * @return true, if it is editor picked
+	 */
 	public boolean isEditorPick() {
 		return editorPick;
 	}
 
 	/**
-	* Sets the total rating of the book.
-	*
-	* @param totalRating
-	*            the new total rating
-	*/
+	 * Sets the total rating of the book.
+	 *
+	 * @param totalRating
+	 *            the new total rating
+	 */
 	private void setTotalRating(long totalRating) {
 		this.totalRating = totalRating;
 	}
 
 	/**
-	* Sets the number of times that the book was rated.
-	*
-	* @param numTimesRated
-	*            the new number of times rated
-	*/
+	 * Sets the number of times that the book was rated.
+	 *
+	 * @param numTimesRated
+	 *            the new number of times rated
+	 */
 	private void setNumTimesRated(long numTimesRated) {
 		this.numTimesRated = numTimesRated;
 	}
 
 	/**
-	* Sets the number of copies of a book in stock.
-	*
-	* @param numCopies
-	*            the new number of copies
-	*/
+	 * Sets the number of copies of a book in stock.
+	 *
+	 * @param numCopies
+	 *            the new number of copies
+	 */
 	private void setNumCopies(int numCopies) {
 		this.numCopies = numCopies;
 	}
 
 	/**
-	* Sets the number of times that a client wanted to buy a book when it was
-	* not in stock, also known as the number of sale misses.
-	*
-	* @param saleMisses
-	*            the new sale misses
-	*/
+	 * Sets the number of times that a client wanted to buy a book when it was
+	 * not in stock, also known as the number of sale misses.
+	 *
+	 * @param saleMisses
+	 *            the new sale misses
+	 */
 	private void setNumSaleMisses(long numSaleMisses) {
 		this.numSaleMisses = numSaleMisses;
 	}
 
 	/**
-	* Sets the book to be an editor pick if <code>editorPick</code> is true,
-	* otherwise the book is not an editor pick.
-	*
-	* @param editorPick
-	*            the new editor pick
-	*/
+	 * Sets the book to be an editor pick if <code>editorPick</code> is true,
+	 * otherwise the book is not an editor pick.
+	 *
+	 * @param editorPick
+	 *            the new editor pick
+	 */
 	public void setEditorPick(boolean editorPick) {
 		this.editorPick = editorPick;
 	}
 
 	/**
-	* Checks if at least <code>numCopies</code> of the book are available.
-	*
-	* @param numCopies
-	*            the number of copies
-	* @return true, if successful
-	*/
+	 * Checks if at least <code>numCopies</code> of the book are available.
+	 *
+	 * @param numCopies
+	 *            the number of copies
+	 * @return true, if successful
+	 */
 	public boolean areCopiesInStore(int numCopies) {
 		return this.numCopies >= numCopies;
 	}
 
 	/**
-	* Reduces the number of copies of the books.
-	*
-	* @param numCopies
-	*            the number of copies
-	* @return true, if successful
-	*/
+	 * Reduces the number of copies of the books.
+	 *
+	 * @param numCopies
+	 *            the number of copies
+	 * @return true, if successful
+	 */
 	public boolean buyCopies(int numCopies) {
 		if (!BookStoreUtility.isInvalidNoCopies(numCopies) && areCopiesInStore(numCopies)) {
 			this.numCopies -= numCopies;
@@ -651,11 +643,11 @@ public class BookStoreBook extends ImmutableBook {
 	}
 
 	/**
-	* Adds <code>newCopies</code> to the total number of copies of the book.
-	*
-	* @param numNewCopies
-	*            the number of new copies
-	*/
+	 * Adds <code>newCopies</code> to the total number of copies of the book.
+	 *
+	 * @param numNewCopies
+	 *            the number of new copies
+	 */
 	public void addCopies(int numNewCopies) {
 		if (!BookStoreUtility.isInvalidNoCopies(numNewCopies)) {
 			this.numCopies += numNewCopies;
@@ -664,21 +656,21 @@ public class BookStoreBook extends ImmutableBook {
 	}
 
 	/**
-	* Increments the amount of missed sales of the book.
-	*
-	* @param numSaleMisses
-	*            the number of sales misses encountered
-	*/
+	 * Increments the amount of missed sales of the book.
+	 *
+	 * @param numSaleMisses
+	 *            the number of sales misses encountered
+	 */
 	public void addSaleMiss(int numSaleMisses) {
 		this.numSaleMisses += numSaleMisses;
 	}
 
 	/**
-	* Adds the rating to the total rating of the book.
-	*
-	* @param rating
-	*            the rating
-	*/
+	 * Adds the rating to the total rating of the book.
+	 *
+	 * @param rating
+	 *            the rating
+	 */
 	public void addRating(int rating) {
 		if (!BookStoreUtility.isInvalidRating(rating)) {
 			this.totalRating += rating;
@@ -687,20 +679,20 @@ public class BookStoreBook extends ImmutableBook {
 	}
 
 	/**
-	* Checks if someone tried to buy the book, while the book was not in stock,
-	* also known as having sale misses.
-	*
-	* @return true, if successful
-	*/
+	 * Checks if someone tried to buy the book, while the book was not in stock,
+	 * also known as having sale misses.
+	 *
+	 * @return true, if successful
+	 */
 	public boolean hadSaleMiss() {
 		return this.numSaleMisses > 0;
 	}
 
 	/**
-	* Returns a string representation of the book.
-	*
-	* @return the string
-	*/
+	 * Returns a string representation of the book.
+	 *
+	 * @return the string
+	 */
 	@Override
 	public String toString() {
 		return "ISBN = " + this.getISBN() + ", Title = " + this.getTitle() + ", Author = " + this.getAuthor()
@@ -708,20 +700,20 @@ public class BookStoreBook extends ImmutableBook {
 	}
 
 	/**
-	* Returns a {@link ImmutableBook} copy of the book.
-	*
-	* @return the immutable book
-	*/
+	 * Returns a {@link ImmutableBook} copy of the book.
+	 *
+	 * @return the immutable book
+	 */
 	public ImmutableBook immutableBook() {
 		return new ImmutableBook(this.getISBN(), new String(this.getTitle()), new String(this.getAuthor()),
 				this.getPrice());
 	}
 
 	/**
-	* Returns a {@link StockBook} copy of the book.
-	*
-	* @return the stock book
-	*/
+	 * Returns a {@link StockBook} copy of the book.
+	 *
+	 * @return the stock book
+	 */
 	public StockBook immutableStockBook() {
 		return new ImmutableStockBook(this.getISBN(), new String(this.getTitle()), new String(this.getAuthor()),
 				this.getPrice(), this.numCopies, this.numSaleMisses, this.numTimesRated, this.totalRating,
@@ -729,10 +721,10 @@ public class BookStoreBook extends ImmutableBook {
 	}
 
 	/**
-	* Returns a {@link BookStoreBook} copy of the book.
-	*
-	* @return the book store book
-	*/
+	 * Returns a {@link BookStoreBook} copy of the book.
+	 *
+	 * @return the book store book
+	 */
 	public BookStoreBook copy() {
 		return new BookStoreBook(this.getISBN(), new String(this.getTitle()), new String(this.getAuthor()),
 				this.getPrice(), this.numCopies);
@@ -746,12 +738,12 @@ package com.acertainbookstore.business;
 import com.acertainbookstore.utils.BookStoreConstants;
 
 /**
-* {@link ImmutableBook} is the object that gets sent back to the bookstore
-* client as a {@link Book}. We do not allow the bookstore client to make any
-* changes to this data structure.
-*
-* @see Book
-*/
+ * {@link ImmutableBook} is the object that gets sent back to the bookstore
+ * client as a {@link Book}. We do not allow the bookstore client to make any
+ * changes to this data structure.
+ *
+ * @see Book
+ */
 public class ImmutableBook implements Book {
 
 	/** The ISBN. */
@@ -767,9 +759,9 @@ public class ImmutableBook implements Book {
 	private final float price;
 
 	/**
-	* Instantiates a new {@link ImmutableBook}. This constructor is necessary
-	* for serialization and has no other purpose.
-	*/
+	 * Instantiates a new {@link ImmutableBook}. This constructor is necessary
+	 * for serialization and has no other purpose.
+	 */
 	public ImmutableBook() {
 		this.isbn = 0;
 		this.title = "";
@@ -778,17 +770,17 @@ public class ImmutableBook implements Book {
 	}
 
 	/**
-	* Instantiates a new {@link ImmutableBook}.
-	*
-	* @param isbn
-	*            the ISBN
-	* @param title
-	*            the title
-	* @param author
-	*            the author
-	* @param price
-	*            the price
-	*/
+	 * Instantiates a new {@link ImmutableBook}.
+	 *
+	 * @param isbn
+	 *            the ISBN
+	 * @param title
+	 *            the title
+	 * @param author
+	 *            the author
+	 * @param price
+	 *            the price
+	 */
 	public ImmutableBook(int isbn, String title, String author, float price) {
 		this.isbn = isbn;
 		this.title = title;
@@ -797,46 +789,46 @@ public class ImmutableBook implements Book {
 	}
 
 	/*
-	* (non-Javadoc)
-	*
-	* @see com.acertainbookstore.business.Book#getISBN()
-	*/
+	 * (non-Javadoc)
+	 *
+	 * @see com.acertainbookstore.business.Book#getISBN()
+	 */
 	public int getISBN() {
 		return isbn;
 	}
 
 	/*
-	* (non-Javadoc)
-	*
-	* @see com.acertainbookstore.business.Book#getTitle()
-	*/
+	 * (non-Javadoc)
+	 *
+	 * @see com.acertainbookstore.business.Book#getTitle()
+	 */
 	public String getTitle() {
 		return title;
 	}
 
 	/*
-	* (non-Javadoc)
-	*
-	* @see com.acertainbookstore.business.Book#getAuthor()
-	*/
+	 * (non-Javadoc)
+	 *
+	 * @see com.acertainbookstore.business.Book#getAuthor()
+	 */
 	public String getAuthor() {
 		return author;
 	}
 
 	/*
-	* (non-Javadoc)
-	*
-	* @see com.acertainbookstore.business.Book#getPrice()
-	*/
+	 * (non-Javadoc)
+	 *
+	 * @see com.acertainbookstore.business.Book#getPrice()
+	 */
 	public float getPrice() {
 		return price;
 	}
 
 	/*
-	* (non-Javadoc)
-	*
-	* @see java.lang.Object#equals(java.lang.Object)
-	*/
+	 * (non-Javadoc)
+	 *
+	 * @see java.lang.Object#equals(java.lang.Object)
+	 */
 	@Override
 	public boolean equals(Object obj) {
 		if (!(obj instanceof Book)) {
@@ -850,10 +842,10 @@ public class ImmutableBook implements Book {
 	}
 
 	/*
-	* (non-Javadoc)
-	*
-	* @see java.lang.Object#toString()
-	*/
+	 * (non-Javadoc)
+	 *
+	 * @see java.lang.Object#toString()
+	 */
 	@Override
 	public String toString() {
 		return "ISBN = " + this.getISBN() + " Title = " + this.getTitle() + " Author = " + this.getAuthor()
@@ -861,10 +853,10 @@ public class ImmutableBook implements Book {
 	}
 
 	/*
-	* (non-Javadoc)
-	*
-	* @see java.lang.Object#hashCode()
-	*/
+	 * (non-Javadoc)
+	 *
+	 * @see java.lang.Object#hashCode()
+	 */
 	@Override
 	public int hashCode() {
 		return getISBN();
@@ -876,13 +868,13 @@ public class ImmutableBook implements Book {
 package com.acertainbookstore.business;
 
 /**
-* {@link ImmutableStockBook} gets sent back to the {@link StockManager}. We do
-* not allow the {@link StockManager} to make any changes to the data structure.
-*
-* @see StockManager
-* @see ImmutableBook
-* @see StockBook
-*/
+ * {@link ImmutableStockBook} gets sent back to the {@link StockManager}. We do
+ * not allow the {@link StockManager} to make any changes to the data structure.
+ *
+ * @see StockManager
+ * @see ImmutableBook
+ * @see StockBook
+ */
 public final class ImmutableStockBook extends ImmutableBook implements StockBook {
 
 	/** The total rating. */
@@ -901,9 +893,9 @@ public final class ImmutableStockBook extends ImmutableBook implements StockBook
 	private final boolean editorPick;
 
 	/**
-	* Instantiates a new {@link ImmutableStockBook}. This constructor is
-	* necessary for serialization and has no other purpose.
-	*/
+	 * Instantiates a new {@link ImmutableStockBook}. This constructor is
+	 * necessary for serialization and has no other purpose.
+	 */
 	public ImmutableStockBook() {
 		this.totalRating = 0;
 		this.numTimesRated = 0;
@@ -913,27 +905,27 @@ public final class ImmutableStockBook extends ImmutableBook implements StockBook
 	}
 
 	/**
-	* Instantiates a new {@link ImmutableStockBook}.
-	*
-	* @param isbn
-	*            the ISBN
-	* @param title
-	*            the title
-	* @param author
-	*            the author
-	* @param price
-	*            the price
-	* @param numCopies
-	*            the number of copies
-	* @param numSaleMisses
-	*            the number of sale misses
-	* @param numTimesRated
-	*            the number of times rated
-	* @param totalRating
-	*            the total rating
-	* @param editorPick
-	*            whether the book is editor picked
-	*/
+	 * Instantiates a new {@link ImmutableStockBook}.
+	 *
+	 * @param isbn
+	 *            the ISBN
+	 * @param title
+	 *            the title
+	 * @param author
+	 *            the author
+	 * @param price
+	 *            the price
+	 * @param numCopies
+	 *            the number of copies
+	 * @param numSaleMisses
+	 *            the number of sale misses
+	 * @param numTimesRated
+	 *            the number of times rated
+	 * @param totalRating
+	 *            the total rating
+	 * @param editorPick
+	 *            whether the book is editor picked
+	 */
 	public ImmutableStockBook(int isbn, String title, String author, float price, int numCopies, long numSaleMisses,
 			long numTimesRated, long totalRating, boolean editorPick) {
 		super(isbn, title, author, price);
@@ -946,55 +938,55 @@ public final class ImmutableStockBook extends ImmutableBook implements StockBook
 	}
 
 	/*
-	* (non-Javadoc)
-	*
-	* @see com.acertainbookstore.business.StockBook#getTotalRating()
-	*/
+	 * (non-Javadoc)
+	 *
+	 * @see com.acertainbookstore.business.StockBook#getTotalRating()
+	 */
 	public long getTotalRating() {
 		return totalRating;
 	}
 
 	/*
-	* (non-Javadoc)
-	*
-	* @see com.acertainbookstore.business.StockBook#getTimesRated()
-	*/
+	 * (non-Javadoc)
+	 *
+	 * @see com.acertainbookstore.business.StockBook#getTimesRated()
+	 */
 	public long getNumTimesRated() {
 		return numTimesRated;
 	}
 
 	/*
-	* (non-Javadoc)
-	*
-	* @see com.acertainbookstore.business.StockBook#getNumCopies()
-	*/
+	 * (non-Javadoc)
+	 *
+	 * @see com.acertainbookstore.business.StockBook#getNumCopies()
+	 */
 	public int getNumCopies() {
 		return numCopies;
 	}
 
 	/*
-	* (non-Javadoc)
-	*
-	* @see com.acertainbookstore.business.StockBook#getSaleMisses()
-	*/
+	 * (non-Javadoc)
+	 *
+	 * @see com.acertainbookstore.business.StockBook#getSaleMisses()
+	 */
 	public long getNumSaleMisses() {
 		return numSaleMisses;
 	}
 
 	/*
-	* (non-Javadoc)
-	*
-	* @see com.acertainbookstore.business.StockBook#getAverageRating()
-	*/
+	 * (non-Javadoc)
+	 *
+	 * @see com.acertainbookstore.business.StockBook#getAverageRating()
+	 */
 	public float getAverageRating() {
 		return (numTimesRated == 0 ? -1.0f : (float) totalRating / numTimesRated);
 	}
 
 	/*
-	* (non-Javadoc)
-	*
-	* @see com.acertainbookstore.business.StockBook#isEditorPick()
-	*/
+	 * (non-Javadoc)
+	 *
+	 * @see com.acertainbookstore.business.StockBook#isEditorPick()
+	 */
 	public boolean isEditorPick() {
 		return editorPick;
 	}
@@ -1023,19 +1015,19 @@ import com.acertainbookstore.utils.BookStoreException;
 import com.acertainbookstore.utils.BookStoreUtility;
 
 /** {@link SingleLockConcurrentCertainBookStore} implements the {@link BookStore} and
-* {@link StockManager} functionalities.
-*
-* @see BookStore
-* @see StockManager
-*/
+ * {@link StockManager} functionalities.
+ *
+ * @see BookStore
+ * @see StockManager
+ */
 public class SingleLockConcurrentCertainBookStore implements BookStore, StockManager {
 
 	/** The mapping of books from ISBN to {@link BookStoreBook}. */
 	private Map<Integer, BookStoreBook> bookMap = null;
 
 	/**
-	* Instantiates a new {@link CertainBookStore}.
-	*/
+	 * Instantiates a new {@link CertainBookStore}.
+	 */
 	public SingleLockConcurrentCertainBookStore() {
 		// Constructors are not synchronized
 		bookMap = new HashMap<>();
@@ -1100,11 +1092,11 @@ public class SingleLockConcurrentCertainBookStore implements BookStore, StockMan
 
 
 	/*
-	* (non-Javadoc)
-	*
-	* @see
-	* com.acertainbookstore.interfaces.StockManager#addBooks(java.util.Set)
-	*/
+	 * (non-Javadoc)
+	 *
+	 * @see
+	 * com.acertainbookstore.interfaces.StockManager#addBooks(java.util.Set)
+	 */
 	public void addBooks(Set<StockBook> bookSet) throws BookStoreException {
 		if (bookSet == null) {
 			throw new BookStoreException(BookStoreConstants.NULL_INPUT);
@@ -1122,11 +1114,11 @@ public class SingleLockConcurrentCertainBookStore implements BookStore, StockMan
 	}
 
 	/*
-	* (non-Javadoc)
-	*
-	* @see
-	* com.acertainbookstore.interfaces.StockManager#addCopies(java.util.Set)
-	*/
+	 * (non-Javadoc)
+	 *
+	 * @see
+	 * com.acertainbookstore.interfaces.StockManager#addCopies(java.util.Set)
+	 */
 	public void addCopies(Set<BookCopy> bookCopiesSet) throws BookStoreException {
 		int isbn;
 		int numCopies;
@@ -1151,25 +1143,25 @@ public class SingleLockConcurrentCertainBookStore implements BookStore, StockMan
 	}
 
 	/*
-	* (non-Javadoc)
-	*
-	* @see com.acertainbookstore.interfaces.StockManager#getBooks()
-	*/
+	 * (non-Javadoc)
+	 *
+	 * @see com.acertainbookstore.interfaces.StockManager#getBooks()
+	 */
 	public List<StockBook> getBooks() {
 		Collection<BookStoreBook> bookMapValues = bookMap.values();
 
 		return bookMapValues.stream()
-				.map(book -> book.immutableStockBook())
-				.collect(Collectors.toList());
+                .map(book -> book.immutableStockBook())
+                .collect(Collectors.toList());
 	}
 
 	/*
-	* (non-Javadoc)
-	*
-	* @see
-	* com.acertainbookstore.interfaces.StockManager#updateEditorPicks(java.util
-	* .Set)
-	*/
+	 * (non-Javadoc)
+	 *
+	 * @see
+	 * com.acertainbookstore.interfaces.StockManager#updateEditorPicks(java.util
+	 * .Set)
+	 */
 	public void updateEditorPicks(Set<BookEditorPick> editorPicks) throws BookStoreException {
 		// Check that all ISBNs that we add/remove are there first.
 		if (editorPicks == null) {
@@ -1188,10 +1180,10 @@ public class SingleLockConcurrentCertainBookStore implements BookStore, StockMan
 	}
 
 	/*
-	* (non-Javadoc)
-	*
-	* @see com.acertainbookstore.interfaces.BookStore#buyBooks(java.util.Set)
-	*/
+	 * (non-Javadoc)
+	 *
+	 * @see com.acertainbookstore.interfaces.BookStore#buyBooks(java.util.Set)
+	 */
 	public void buyBooks(Set<BookCopy> bookCopiesToBuy) throws BookStoreException {
 		if (bookCopiesToBuy == null) {
 			throw new BookStoreException(BookStoreConstants.NULL_INPUT);
@@ -1236,12 +1228,12 @@ public class SingleLockConcurrentCertainBookStore implements BookStore, StockMan
 	}
 
 	/*
-	* (non-Javadoc)
-	*
-	* @see
-	* com.acertainbookstore.interfaces.StockManager#getBooksByISBN(java.util.
-	* Set)
-	*/
+	 * (non-Javadoc)
+	 *
+	 * @see
+	 * com.acertainbookstore.interfaces.StockManager#getBooksByISBN(java.util.
+	 * Set)
+	 */
 	public List<StockBook> getBooksByISBN(Set<Integer> isbnSet) throws BookStoreException {
 		if (isbnSet == null) {
 			throw new BookStoreException(BookStoreConstants.NULL_INPUT);
@@ -1252,15 +1244,15 @@ public class SingleLockConcurrentCertainBookStore implements BookStore, StockMan
 		}
 
 		return isbnSet.stream()
-				.map(isbn -> bookMap.get(isbn).immutableStockBook())
-				.collect(Collectors.toList());
+                .map(isbn -> bookMap.get(isbn).immutableStockBook())
+                .collect(Collectors.toList());
 	}
 
 	/*
-	* (non-Javadoc)
-	*
-	* @see com.acertainbookstore.interfaces.BookStore#getBooks(java.util.Set)
-	*/
+	 * (non-Javadoc)
+	 *
+	 * @see com.acertainbookstore.interfaces.BookStore#getBooks(java.util.Set)
+	 */
 	public List<Book> getBooks(Set<Integer> isbnSet) throws BookStoreException {
 		if (isbnSet == null) {
 			throw new BookStoreException(BookStoreConstants.NULL_INPUT);
@@ -1272,24 +1264,24 @@ public class SingleLockConcurrentCertainBookStore implements BookStore, StockMan
 		}
 
 		return isbnSet.stream()
-				.map(isbn -> bookMap.get(isbn).immutableBook())
-				.collect(Collectors.toList());
+                .map(isbn -> bookMap.get(isbn).immutableBook())
+                .collect(Collectors.toList());
 	}
 
 	/*
-	* (non-Javadoc)
-	*
-	* @see com.acertainbookstore.interfaces.BookStore#getEditorPicks(int)
-	*/
+	 * (non-Javadoc)
+	 *
+	 * @see com.acertainbookstore.interfaces.BookStore#getEditorPicks(int)
+	 */
 	public List<Book> getEditorPicks(int numBooks) throws BookStoreException {
 		if (numBooks < 0) {
 			throw new BookStoreException("numBooks = " + numBooks + ", but it must be positive");
 		}
 
 		List<BookStoreBook> listAllEditorPicks = bookMap.entrySet().stream()
-				.map(pair -> pair.getValue())
+                .map(pair -> pair.getValue())
 				.filter(book -> book.isEditorPick())
-				.collect(Collectors.toList());
+                .collect(Collectors.toList());
 
 		// Find numBooks random indices of books that will be picked.
 		Random rand = new Random();
@@ -1313,57 +1305,57 @@ public class SingleLockConcurrentCertainBookStore implements BookStore, StockMan
 			}
 		}
 
-		// Return all the books by the randomly chosen indices.
-		return tobePicked.stream()
-				.map(index -> listAllEditorPicks.get(index).immutableBook())
-				.collect(Collectors.toList());
+        // Return all the books by the randomly chosen indices.
+        return tobePicked.stream()
+                .map(index -> listAllEditorPicks.get(index).immutableBook())
+                .collect(Collectors.toList());
 	}
 
 	/*
-	* (non-Javadoc)
-	*
-	* @see com.acertainbookstore.interfaces.BookStore#getTopRatedBooks(int)
-	*/
+	 * (non-Javadoc)
+	 *
+	 * @see com.acertainbookstore.interfaces.BookStore#getTopRatedBooks(int)
+	 */
 	@Override
 	public List<Book> getTopRatedBooks(int numBooks) throws BookStoreException {
 		throw new BookStoreException();
 	}
 
 	/*
-	* (non-Javadoc)
-	*
-	* @see com.acertainbookstore.interfaces.StockManager#getBooksInDemand()
-	*/
+	 * (non-Javadoc)
+	 *
+	 * @see com.acertainbookstore.interfaces.StockManager#getBooksInDemand()
+	 */
 	@Override
 	public List<StockBook> getBooksInDemand() throws BookStoreException {
 		throw new BookStoreException();
 	}
 
 	/*
-	* (non-Javadoc)
-	*
-	* @see com.acertainbookstore.interfaces.BookStore#rateBooks(java.util.Set)
-	*/
+	 * (non-Javadoc)
+	 *
+	 * @see com.acertainbookstore.interfaces.BookStore#rateBooks(java.util.Set)
+	 */
 	@Override
 	public void rateBooks(Set<BookRating> bookRating) throws BookStoreException {
 		throw new BookStoreException();
 	}
 
 	/*
-	* (non-Javadoc)
-	*
-	* @see com.acertainbookstore.interfaces.StockManager#removeAllBooks()
-	*/
+	 * (non-Javadoc)
+	 *
+	 * @see com.acertainbookstore.interfaces.StockManager#removeAllBooks()
+	 */
 	public void removeAllBooks() throws BookStoreException {
 		bookMap.clear();
 	}
 
 	/*
-	* (non-Javadoc)
-	*
-	* @see
-	* com.acertainbookstore.interfaces.StockManager#removeBooks(java.util.Set)
-	*/
+	 * (non-Javadoc)
+	 *
+	 * @see
+	 * com.acertainbookstore.interfaces.StockManager#removeBooks(java.util.Set)
+	 */
 	public void removeBooks(Set<Integer> isbnSet) throws BookStoreException {
 		if (isbnSet == null) {
 			throw new BookStoreException(BookStoreConstants.NULL_INPUT);
@@ -1390,56 +1382,56 @@ public class SingleLockConcurrentCertainBookStore implements BookStore, StockMan
 package com.acertainbookstore.business;
 
 /**
-* {@link StockBook} implements the {@link Book} data-structure that a
-* {@link StockManager} works with.
-*
-* @see Book
-* @see StockBook
-* @see StockManager
-*/
+ * {@link StockBook} implements the {@link Book} data-structure that a
+ * {@link StockManager} works with.
+ *
+ * @see Book
+ * @see StockBook
+ * @see StockManager
+ */
 public interface StockBook extends Book {
 
 	/**
-	* Returns to accumulated rating.
-	*
-	* @return the total rating
-	*/
+	 * Returns to accumulated rating.
+	 *
+	 * @return the total rating
+	 */
 	public long getTotalRating();
 
 	/**
-	* Gets the number of times a book has been rated.
-	*
-	* @return the times rated
-	*/
+	 * Gets the number of times a book has been rated.
+	 *
+	 * @return the times rated
+	 */
 	public long getNumTimesRated();
 
 	/**
-	* Gets the number of book copies.
-	*
-	* @return the number of copies
-	*/
+	 * Gets the number of book copies.
+	 *
+	 * @return the number of copies
+	 */
 	public int getNumCopies();
 
 	/**
-	* Gets the number of times that a client wanted to buy a book when it was
-	* not in stock.
-	*
-	* @return the sale misses
-	*/
+	 * Gets the number of times that a client wanted to buy a book when it was
+	 * not in stock.
+	 *
+	 * @return the sale misses
+	 */
 	public long getNumSaleMisses();
 
 	/**
-	* Gets the rating of the book.
-	*
-	* @return the average rating
-	*/
+	 * Gets the rating of the book.
+	 *
+	 * @return the average rating
+	 */
 	public float getAverageRating();
 
 	/**
-	* Checks if the book is editor picked.
-	*
-	* @return true, if it is editor picked
-	*/
+	 * Checks if the book is editor picked.
+	 *
+	 * @return true, if it is editor picked
+	 */
 	public boolean isEditorPick();
 }
 
@@ -1466,19 +1458,19 @@ import com.acertainbookstore.utils.BookStoreException;
 import com.acertainbookstore.utils.BookStoreUtility;
 
 /** {@link TwoLevelLockingConcurrentCertainBookStore} implements the {@link BookStore} and
-* {@link StockManager} functionalities.
-*
-* @see BookStore
-* @see StockManager
-*/
+ * {@link StockManager} functionalities.
+ *
+ * @see BookStore
+ * @see StockManager
+ */
 public class TwoLevelLockingConcurrentCertainBookStore implements BookStore, StockManager {
 
 	/** The mapping of books from ISBN to {@link BookStoreBook}. */
 	private Map<Integer, BookStoreBook> bookMap = null;
 
 	/**
-	* Instantiates a new {@link CertainBookStore}.
-	*/
+	 * Instantiates a new {@link CertainBookStore}.
+	 */
 	public TwoLevelLockingConcurrentCertainBookStore() {
 		// Constructors are not synchronized
 		bookMap = new HashMap<>();
@@ -1542,11 +1534,11 @@ public class TwoLevelLockingConcurrentCertainBookStore implements BookStore, Sto
 	}
 
 	/*
-	* (non-Javadoc)
-	*
-	* @see
-	* com.acertainbookstore.interfaces.StockManager#addBooks(java.util.Set)
-	*/
+	 * (non-Javadoc)
+	 *
+	 * @see
+	 * com.acertainbookstore.interfaces.StockManager#addBooks(java.util.Set)
+	 */
 	public void addBooks(Set<StockBook> bookSet) throws BookStoreException {
 		if (bookSet == null) {
 			throw new BookStoreException(BookStoreConstants.NULL_INPUT);
@@ -1564,11 +1556,11 @@ public class TwoLevelLockingConcurrentCertainBookStore implements BookStore, Sto
 	}
 
 	/*
-	* (non-Javadoc)
-	*
-	* @see
-	* com.acertainbookstore.interfaces.StockManager#addCopies(java.util.Set)
-	*/
+	 * (non-Javadoc)
+	 *
+	 * @see
+	 * com.acertainbookstore.interfaces.StockManager#addCopies(java.util.Set)
+	 */
 	public void addCopies(Set<BookCopy> bookCopiesSet) throws BookStoreException {
 		int isbn;
 		int numCopies;
@@ -1593,10 +1585,10 @@ public class TwoLevelLockingConcurrentCertainBookStore implements BookStore, Sto
 	}
 
 	/*
-	* (non-Javadoc)
-	*
-	* @see com.acertainbookstore.interfaces.StockManager#getBooks()
-	*/
+	 * (non-Javadoc)
+	 *
+	 * @see com.acertainbookstore.interfaces.StockManager#getBooks()
+	 */
 	public List<StockBook> getBooks() {
 		Collection<BookStoreBook> bookMapValues = bookMap.values();
 
@@ -1606,12 +1598,12 @@ public class TwoLevelLockingConcurrentCertainBookStore implements BookStore, Sto
 	}
 
 	/*
-	* (non-Javadoc)
-	*
-	* @see
-	* com.acertainbookstore.interfaces.StockManager#updateEditorPicks(java.util
-	* .Set)
-	*/
+	 * (non-Javadoc)
+	 *
+	 * @see
+	 * com.acertainbookstore.interfaces.StockManager#updateEditorPicks(java.util
+	 * .Set)
+	 */
 	public void updateEditorPicks(Set<BookEditorPick> editorPicks) throws BookStoreException {
 		// Check that all ISBNs that we add/remove are there first.
 		if (editorPicks == null) {
@@ -1630,10 +1622,10 @@ public class TwoLevelLockingConcurrentCertainBookStore implements BookStore, Sto
 	}
 
 	/*
-	* (non-Javadoc)
-	*
-	* @see com.acertainbookstore.interfaces.BookStore#buyBooks(java.util.Set)
-	*/
+	 * (non-Javadoc)
+	 *
+	 * @see com.acertainbookstore.interfaces.BookStore#buyBooks(java.util.Set)
+	 */
 	public void buyBooks(Set<BookCopy> bookCopiesToBuy) throws BookStoreException {
 		if (bookCopiesToBuy == null) {
 			throw new BookStoreException(BookStoreConstants.NULL_INPUT);
@@ -1678,12 +1670,12 @@ public class TwoLevelLockingConcurrentCertainBookStore implements BookStore, Sto
 	}
 
 	/*
-	* (non-Javadoc)
-	*
-	* @see
-	* com.acertainbookstore.interfaces.StockManager#getBooksByISBN(java.util.
-	* Set)
-	*/
+	 * (non-Javadoc)
+	 *
+	 * @see
+	 * com.acertainbookstore.interfaces.StockManager#getBooksByISBN(java.util.
+	 * Set)
+	 */
 	public List<StockBook> getBooksByISBN(Set<Integer> isbnSet) throws BookStoreException {
 		if (isbnSet == null) {
 			throw new BookStoreException(BookStoreConstants.NULL_INPUT);
@@ -1699,10 +1691,10 @@ public class TwoLevelLockingConcurrentCertainBookStore implements BookStore, Sto
 	}
 
 	/*
-	* (non-Javadoc)
-	*
-	* @see com.acertainbookstore.interfaces.BookStore#getBooks(java.util.Set)
-	*/
+	 * (non-Javadoc)
+	 *
+	 * @see com.acertainbookstore.interfaces.BookStore#getBooks(java.util.Set)
+	 */
 	public List<Book> getBooks(Set<Integer> isbnSet) throws BookStoreException {
 		if (isbnSet == null) {
 			throw new BookStoreException(BookStoreConstants.NULL_INPUT);
@@ -1719,10 +1711,10 @@ public class TwoLevelLockingConcurrentCertainBookStore implements BookStore, Sto
 	}
 
 	/*
-	* (non-Javadoc)
-	*
-	* @see com.acertainbookstore.interfaces.BookStore#getEditorPicks(int)
-	*/
+	 * (non-Javadoc)
+	 *
+	 * @see com.acertainbookstore.interfaces.BookStore#getEditorPicks(int)
+	 */
 	public List<Book> getEditorPicks(int numBooks) throws BookStoreException {
 		if (numBooks < 0) {
 			throw new BookStoreException("numBooks = " + numBooks + ", but it must be positive");
@@ -1762,50 +1754,50 @@ public class TwoLevelLockingConcurrentCertainBookStore implements BookStore, Sto
 	}
 
 	/*
-	* (non-Javadoc)
-	*
-	* @see com.acertainbookstore.interfaces.BookStore#getTopRatedBooks(int)
-	*/
+	 * (non-Javadoc)
+	 *
+	 * @see com.acertainbookstore.interfaces.BookStore#getTopRatedBooks(int)
+	 */
 	@Override
 	public List<Book> getTopRatedBooks(int numBooks) throws BookStoreException {
 		throw new BookStoreException();
 	}
 
 	/*
-	* (non-Javadoc)
-	*
-	* @see com.acertainbookstore.interfaces.StockManager#getBooksInDemand()
-	*/
+	 * (non-Javadoc)
+	 *
+	 * @see com.acertainbookstore.interfaces.StockManager#getBooksInDemand()
+	 */
 	@Override
 	public List<StockBook> getBooksInDemand() throws BookStoreException {
 		throw new BookStoreException();
 	}
 
 	/*
-	* (non-Javadoc)
-	*
-	* @see com.acertainbookstore.interfaces.BookStore#rateBooks(java.util.Set)
-	*/
+	 * (non-Javadoc)
+	 *
+	 * @see com.acertainbookstore.interfaces.BookStore#rateBooks(java.util.Set)
+	 */
 	@Override
 	public void rateBooks(Set<BookRating> bookRating) throws BookStoreException {
 		throw new BookStoreException();
 	}
 
 	/*
-	* (non-Javadoc)
-	*
-	* @see com.acertainbookstore.interfaces.StockManager#removeAllBooks()
-	*/
+	 * (non-Javadoc)
+	 *
+	 * @see com.acertainbookstore.interfaces.StockManager#removeAllBooks()
+	 */
 	public void removeAllBooks() throws BookStoreException {
 		bookMap.clear();
 	}
 
 	/*
-	* (non-Javadoc)
-	*
-	* @see
-	* com.acertainbookstore.interfaces.StockManager#removeBooks(java.util.Set)
-	*/
+	 * (non-Javadoc)
+	 *
+	 * @see
+	 * com.acertainbookstore.interfaces.StockManager#removeBooks(java.util.Set)
+	 */
 	public void removeBooks(Set<Integer> isbnSet) throws BookStoreException {
 		if (isbnSet == null) {
 			throw new BookStoreException(BookStoreConstants.NULL_INPUT);
@@ -1832,11 +1824,11 @@ public class TwoLevelLockingConcurrentCertainBookStore implements BookStore, Sto
 package com.acertainbookstore.client;
 
 /**
-* {@link BookStoreClientConstants} stores the constants used by the
-* {@link CertainBookStore} proxy and client classes.
-*
-* @see CertainBookStore
-*/
+ * {@link BookStoreClientConstants} stores the constants used by the
+ * {@link CertainBookStore} proxy and client classes.
+ *
+ * @see CertainBookStore
+ */
 public final class BookStoreClientConstants {
 
 	/** The Constant CLIENT_MAX_CONNECTION_ADDRESS. */
@@ -1867,8 +1859,8 @@ public final class BookStoreClientConstants {
 	public static final String STR_ERR_CLIENT_ENCODING = "CLIENT_ENCODING";
 
 	/**
-	* Prevents the instantiation of a new {@link BookStoreClientConstants}.
-	*/
+	 * Prevents the instantiation of a new {@link BookStoreClientConstants}.
+	 */
 	private BookStoreClientConstants() {
 		// Added a private constructor to hide the default one.
 	}
@@ -1901,12 +1893,12 @@ import com.acertainbookstore.utils.BookStoreResponse;
 import com.acertainbookstore.utils.BookStoreUtility;
 
 /**
-* {@link BookStoreHTTPProxy} implements the client level synchronous
-* {@link CertainBookStore} API declared in the {@link BookStore} class.
-*
-* @see BookStore
-* @see CertainBookStore
-*/
+ * {@link BookStoreHTTPProxy} implements the client level synchronous
+ * {@link CertainBookStore} API declared in the {@link BookStore} class.
+ *
+ * @see BookStore
+ * @see CertainBookStore
+ */
 public class BookStoreHTTPProxy implements BookStore {
 
 	/** The client. */
@@ -1919,13 +1911,13 @@ public class BookStoreHTTPProxy implements BookStore {
 	private static ThreadLocal<BookStoreSerializer> serializer;
 
 	/**
-	* Initializes a new {@link BookStoreHTTPProxy}.
-	*
-	* @param serverAddress
-	*            the server address
-	* @throws Exception
-	*             the exception
-	*/
+	 * Initializes a new {@link BookStoreHTTPProxy}.
+	 *
+	 * @param serverAddress
+	 *            the server address
+	 * @throws Exception
+	 *             the exception
+	 */
 	public BookStoreHTTPProxy(String serverAddress) throws Exception {
 
 		// Setup the type of serializer.
@@ -1951,29 +1943,29 @@ public class BookStoreHTTPProxy implements BookStore {
 	}
 
 	/**
-	* Gets the server address.
-	*
-	* @return the server address
-	*/
+	 * Gets the server address.
+	 *
+	 * @return the server address
+	 */
 	public String getServerAddress() {
 		return serverAddress;
 	}
 
 	/**
-	* Sets the server address.
-	*
-	* @param serverAddress
-	*            the new server address
-	*/
+	 * Sets the server address.
+	 *
+	 * @param serverAddress
+	 *            the new server address
+	 */
 	public void setServerAddress(String serverAddress) {
 		this.serverAddress = serverAddress;
 	}
 
 	/*
-	* (non-Javadoc)
-	*
-	* @see com.acertainbookstore.interfaces.BookStore#buyBooks(java.util.Set)
-	*/
+	 * (non-Javadoc)
+	 *
+	 * @see com.acertainbookstore.interfaces.BookStore#buyBooks(java.util.Set)
+	 */
 	public void buyBooks(Set<BookCopy> isbnSet) throws BookStoreException {
 		String urlString = serverAddress + "/" + BookStoreMessageTag.BUYBOOKS;
 		BookStoreRequest bookStoreRequest = BookStoreRequest.newPostRequest(urlString, isbnSet);
@@ -1981,10 +1973,10 @@ public class BookStoreHTTPProxy implements BookStore {
 	}
 
 	/*
-	* (non-Javadoc)
-	*
-	* @see com.acertainbookstore.interfaces.BookStore#getBooks(java.util.Set)
-	*/
+	 * (non-Javadoc)
+	 *
+	 * @see com.acertainbookstore.interfaces.BookStore#getBooks(java.util.Set)
+	 */
 	@SuppressWarnings("unchecked")
 	public List<Book> getBooks(Set<Integer> isbnSet) throws BookStoreException {
 		String urlString = serverAddress + "/" + BookStoreMessageTag.GETBOOKS;
@@ -1995,10 +1987,10 @@ public class BookStoreHTTPProxy implements BookStore {
 	}
 
 	/*
-	* (non-Javadoc)
-	*
-	* @see com.acertainbookstore.interfaces.BookStore#getEditorPicks(int)
-	*/
+	 * (non-Javadoc)
+	 *
+	 * @see com.acertainbookstore.interfaces.BookStore#getEditorPicks(int)
+	 */
 	@SuppressWarnings("unchecked")
 	public List<Book> getEditorPicks(int numBooks) throws BookStoreException {
 		String urlEncodedNumBooks = null;
@@ -2015,8 +2007,8 @@ public class BookStoreHTTPProxy implements BookStore {
 	}
 
 	/**
-	* Stops the proxy.
-	*/
+	 * Stops the proxy.
+	 */
 	public void stop() {
 		try {
 			client.stop();
@@ -2026,20 +2018,20 @@ public class BookStoreHTTPProxy implements BookStore {
 	}
 
 	/*
-	* (non-Javadoc)
-	*
-	* @see com.acertainbookstore.interfaces.BookStore#rateBooks(java.util.Set)
-	*/
+	 * (non-Javadoc)
+	 *
+	 * @see com.acertainbookstore.interfaces.BookStore#rateBooks(java.util.Set)
+	 */
 	@Override
 	public void rateBooks(Set<BookRating> bookRating) throws BookStoreException {
 		throw new BookStoreException();
 	}
 
 	/*
-	* (non-Javadoc)
-	*
-	* @see com.acertainbookstore.interfaces.BookStore#getTopRatedBooks(int)
-	*/
+	 * (non-Javadoc)
+	 *
+	 * @see com.acertainbookstore.interfaces.BookStore#getTopRatedBooks(int)
+	 */
 	@Override
 	public List<Book> getTopRatedBooks(int numBooks) throws BookStoreException {
 		throw new BookStoreException();
@@ -2071,13 +2063,13 @@ import com.acertainbookstore.utils.BookStoreResponse;
 import com.acertainbookstore.utils.BookStoreUtility;
 
 /**
-* {@link StockManagerHTTPProxy} implements the client level synchronous
-* {@link CertainBookStore} API declared in the {@link StockManager} class. Uses
-* the HTTP protocol for communication with the server.
-*
-* @see CertainBookStore
-* @see StockManager
-*/
+ * {@link StockManagerHTTPProxy} implements the client level synchronous
+ * {@link CertainBookStore} API declared in the {@link StockManager} class. Uses
+ * the HTTP protocol for communication with the server.
+ *
+ * @see CertainBookStore
+ * @see StockManager
+ */
 public class StockManagerHTTPProxy implements StockManager {
 
 	/** The client. */
@@ -2090,13 +2082,13 @@ public class StockManagerHTTPProxy implements StockManager {
 	private static ThreadLocal<BookStoreSerializer> serializer;
 
 	/**
-	* Initializes a new {@link StockManagerHTTPProxy}.
-	*
-	* @param serverAddress
-	*            the server address
-	* @throws Exception
-	*             the exception
-	*/
+	 * Initializes a new {@link StockManagerHTTPProxy}.
+	 *
+	 * @param serverAddress
+	 *            the server address
+	 * @throws Exception
+	 *             the exception
+	 */
 	public StockManagerHTTPProxy(String serverAddress) throws Exception {
 
 		// Setup the type of serializer.
@@ -2122,30 +2114,30 @@ public class StockManagerHTTPProxy implements StockManager {
 	}
 
 	/**
-	* Gets the server address.
-	*
-	* @return the server address
-	*/
+	 * Gets the server address.
+	 *
+	 * @return the server address
+	 */
 	public String getServerAddress() {
 		return serverAddress;
 	}
 
 	/**
-	* Sets the server address.
-	*
-	* @param serverAddress
-	*            the new server address
-	*/
+	 * Sets the server address.
+	 *
+	 * @param serverAddress
+	 *            the new server address
+	 */
 	public void setServerAddress(String serverAddress) {
 		this.serverAddress = serverAddress;
 	}
 
 	/*
-	* (non-Javadoc)
-	*
-	* @see
-	* com.acertainbookstore.interfaces.StockManager#addBooks(java.util.Set)
-	*/
+	 * (non-Javadoc)
+	 *
+	 * @see
+	 * com.acertainbookstore.interfaces.StockManager#addBooks(java.util.Set)
+	 */
 	public void addBooks(Set<StockBook> bookSet) throws BookStoreException {
 		String urlString = serverAddress + "/" + BookStoreMessageTag.ADDBOOKS;
 		BookStoreRequest bookStoreRequest = BookStoreRequest.newPostRequest(urlString, bookSet);
@@ -2153,11 +2145,11 @@ public class StockManagerHTTPProxy implements StockManager {
 	}
 
 	/*
-	* (non-Javadoc)
-	*
-	* @see
-	* com.acertainbookstore.interfaces.StockManager#addCopies(java.util.Set)
-	*/
+	 * (non-Javadoc)
+	 *
+	 * @see
+	 * com.acertainbookstore.interfaces.StockManager#addCopies(java.util.Set)
+	 */
 	public void addCopies(Set<BookCopy> bookCopiesSet) throws BookStoreException {
 		String urlString = serverAddress + "/" + BookStoreMessageTag.ADDCOPIES;
 		BookStoreRequest bookStoreRequest = BookStoreRequest.newPostRequest(urlString, bookCopiesSet);
@@ -2165,10 +2157,10 @@ public class StockManagerHTTPProxy implements StockManager {
 	}
 
 	/*
-	* (non-Javadoc)
-	*
-	* @see com.acertainbookstore.interfaces.StockManager#getBooks()
-	*/
+	 * (non-Javadoc)
+	 *
+	 * @see com.acertainbookstore.interfaces.StockManager#getBooks()
+	 */
 	@SuppressWarnings("unchecked")
 	public List<StockBook> getBooks() throws BookStoreException {
 		String urlString = serverAddress + "/" + BookStoreMessageTag.LISTBOOKS;
@@ -2179,12 +2171,12 @@ public class StockManagerHTTPProxy implements StockManager {
 	}
 
 	/*
-	* (non-Javadoc)
-	*
-	* @see
-	* com.acertainbookstore.interfaces.StockManager#updateEditorPicks(java.util
-	* .Set)
-	*/
+	 * (non-Javadoc)
+	 *
+	 * @see
+	 * com.acertainbookstore.interfaces.StockManager#updateEditorPicks(java.util
+	 * .Set)
+	 */
 	public void updateEditorPicks(Set<BookEditorPick> editorPicksValues) throws BookStoreException {
 		String urlString = serverAddress + "/" + BookStoreMessageTag.UPDATEEDITORPICKS + "?";
 		BookStoreRequest bookStoreRequest = BookStoreRequest.newPostRequest(urlString, editorPicksValues);
@@ -2192,20 +2184,20 @@ public class StockManagerHTTPProxy implements StockManager {
 	}
 
 	/*
-	* (non-Javadoc)
-	*
-	* @see com.acertainbookstore.interfaces.StockManager#getBooksInDemand()
-	*/
+	 * (non-Javadoc)
+	 *
+	 * @see com.acertainbookstore.interfaces.StockManager#getBooksInDemand()
+	 */
 	@Override
 	public List<StockBook> getBooksInDemand() throws BookStoreException {
 		throw new BookStoreException("Not implemented");
 	}
 
 	/*
-	* (non-Javadoc)
-	*
-	* @see com.acertainbookstore.interfaces.StockManager#removeAllBooks()
-	*/
+	 * (non-Javadoc)
+	 *
+	 * @see com.acertainbookstore.interfaces.StockManager#removeAllBooks()
+	 */
 	public void removeAllBooks() throws BookStoreException {
 		String urlString = serverAddress + "/" + BookStoreMessageTag.REMOVEALLBOOKS;
 
@@ -2217,11 +2209,11 @@ public class StockManagerHTTPProxy implements StockManager {
 	}
 
 	/*
-	* (non-Javadoc)
-	*
-	* @see
-	* com.acertainbookstore.interfaces.StockManager#removeBooks(java.util.Set)
-	*/
+	 * (non-Javadoc)
+	 *
+	 * @see
+	 * com.acertainbookstore.interfaces.StockManager#removeBooks(java.util.Set)
+	 */
 	public void removeBooks(Set<Integer> isbnSet) throws BookStoreException {
 		String urlString = serverAddress + "/" + BookStoreMessageTag.REMOVEBOOKS;
 		BookStoreRequest bookStoreRequest = BookStoreRequest.newPostRequest(urlString, isbnSet);
@@ -2229,12 +2221,12 @@ public class StockManagerHTTPProxy implements StockManager {
 	}
 
 	/*
-	* (non-Javadoc)
-	*
-	* @see
-	* com.acertainbookstore.interfaces.StockManager#getBooksByISBN(java.util.
-	* Set)
-	*/
+	 * (non-Javadoc)
+	 *
+	 * @see
+	 * com.acertainbookstore.interfaces.StockManager#getBooksByISBN(java.util.
+	 * Set)
+	 */
 	@SuppressWarnings("unchecked")
 	public List<StockBook> getBooksByISBN(Set<Integer> isbns) throws BookStoreException {
 		String urlString = serverAddress + "/" + BookStoreMessageTag.GETSTOCKBOOKSBYISBN;
@@ -2245,8 +2237,8 @@ public class StockManagerHTTPProxy implements StockManager {
 	}
 
 	/**
-	* Stops the proxy.
-	*/
+	 * Stops the proxy.
+	 */
 	public void stop() {
 		try {
 			client.stop();
@@ -2286,10 +2278,10 @@ import com.acertainbookstore.utils.BookStoreConstants;
 import com.acertainbookstore.utils.BookStoreException;
 
 /**
-* {@link BookStoreTest} tests the {@link BookStore} interface.
-*
-* @see BookStore
-*/
+ * {@link BookStoreTest} tests the {@link BookStore} interface.
+ *
+ * @see BookStore
+ */
 public class BookStoreTest {
 
 	/** The Constant TEST_ISBN. */
@@ -2312,8 +2304,8 @@ public class BookStoreTest {
 	private static BookStore client;
 
 	/**
-	* Sets the up before class.
-	*/
+	 * Sets the up before class.
+	 */
 	@BeforeClass
 	public static void setUpBeforeClass() {
 		try {
@@ -2345,15 +2337,15 @@ public class BookStoreTest {
 	}
 
 	/**
-	* Helper method to add some books.
-	*
-	* @param isbn
-	*            the isbn
-	* @param copies
-	*            the copies
-	* @throws BookStoreException
-	*             the book store exception
-	*/
+	 * Helper method to add some books.
+	 *
+	 * @param isbn
+	 *            the isbn
+	 * @param copies
+	 *            the copies
+	 * @throws BookStoreException
+	 *             the book store exception
+	 */
 	public void addBooks(int isbn, int copies) throws BookStoreException {
 		Set<StockBook> booksToAdd = new HashSet<StockBook>();
 		StockBook book = new ImmutableStockBook(isbn, "Test of Thrones", "George RR Testin'", (float) 10, copies, 0, 0,
@@ -2363,21 +2355,21 @@ public class BookStoreTest {
 	}
 
 	/**
-	* Helper method to get the default book used by initializeBooks.
-	*
-	* @return the default book
-	*/
+	 * Helper method to get the default book used by initializeBooks.
+	 *
+	 * @return the default book
+	 */
 	public StockBook getDefaultBook() {
 		return new ImmutableStockBook(TEST_ISBN, "Harry Potter and JUnit", "JK Unit", (float) 10, NUM_COPIES, 0, 0, 0,
 				false);
 	}
 
 	/**
-	* Method to add a book, executed before every test case is run.
-	*
-	* @throws BookStoreException
-	*             the book store exception
-	*/
+	 * Method to add a book, executed before every test case is run.
+	 *
+	 * @throws BookStoreException
+	 *             the book store exception
+	 */
 	@Before
 	public void initializeBooks() throws BookStoreException {
 		Set<StockBook> booksToAdd = new HashSet<StockBook>();
@@ -2386,22 +2378,22 @@ public class BookStoreTest {
 	}
 
 	/**
-	* Method to clean up the book store, execute after every test case is run.
-	*
-	* @throws BookStoreException
-	*             the book store exception
-	*/
+	 * Method to clean up the book store, execute after every test case is run.
+	 *
+	 * @throws BookStoreException
+	 *             the book store exception
+	 */
 	@After
 	public void cleanupBooks() throws BookStoreException {
 		storeManager.removeAllBooks();
 	}
 
 	/**
-	* Tests basic buyBook() functionality.
-	*
-	* @throws BookStoreException
-	*             the book store exception
-	*/
+	 * Tests basic buyBook() functionality.
+	 *
+	 * @throws BookStoreException
+	 *             the book store exception
+	 */
 	@Test
 	public void testBuyAllCopiesDefaultBook() throws BookStoreException {
 		// Set of books to buy
@@ -2426,11 +2418,11 @@ public class BookStoreTest {
 	}
 
 	/**
-	* Tests that books with invalid ISBNs cannot be bought.
-	*
-	* @throws BookStoreException
-	*             the book store exception
-	*/
+	 * Tests that books with invalid ISBNs cannot be bought.
+	 *
+	 * @throws BookStoreException
+	 *             the book store exception
+	 */
 	@Test
 	public void testBuyInvalidISBN() throws BookStoreException {
 		List<StockBook> booksInStorePreTest = storeManager.getBooks();
@@ -2456,11 +2448,11 @@ public class BookStoreTest {
 	}
 
 	/**
-	* Tests that books can only be bought if they are in the book store.
-	*
-	* @throws BookStoreException
-	*             the book store exception
-	*/
+	 * Tests that books can only be bought if they are in the book store.
+	 *
+	 * @throws BookStoreException
+	 *             the book store exception
+	 */
 	@Test
 	public void testBuyNonExistingISBN() throws BookStoreException {
 		List<StockBook> booksInStorePreTest = storeManager.getBooks();
@@ -2486,11 +2478,11 @@ public class BookStoreTest {
 	}
 
 	/**
-	* Tests that you can't buy more books than there are copies.
-	*
-	* @throws BookStoreException
-	*             the book store exception
-	*/
+	 * Tests that you can't buy more books than there are copies.
+	 *
+	 * @throws BookStoreException
+	 *             the book store exception
+	 */
 	@Test
 	public void testBuyTooManyBooks() throws BookStoreException {
 		List<StockBook> booksInStorePreTest = storeManager.getBooks();
@@ -2512,11 +2504,11 @@ public class BookStoreTest {
 	}
 
 	/**
-	* Tests that you can't buy a negative number of books.
-	*
-	* @throws BookStoreException
-	*             the book store exception
-	*/
+	 * Tests that you can't buy a negative number of books.
+	 *
+	 * @throws BookStoreException
+	 *             the book store exception
+	 */
 	@Test
 	public void testBuyNegativeNumberOfBookCopies() throws BookStoreException {
 		List<StockBook> booksInStorePreTest = storeManager.getBooks();
@@ -2538,11 +2530,11 @@ public class BookStoreTest {
 	}
 
 	/**
-	* Tests that all books can be retrieved.
-	*
-	* @throws BookStoreException
-	*             the book store exception
-	*/
+	 * Tests that all books can be retrieved.
+	 *
+	 * @throws BookStoreException
+	 *             the book store exception
+	 */
 	@Test
 	public void testGetBooks() throws BookStoreException {
 		Set<StockBook> booksAdded = new HashSet<StockBook>();
@@ -2566,11 +2558,11 @@ public class BookStoreTest {
 	}
 
 	/**
-	* Tests that a list of books with a certain feature can be retrieved.
-	*
-	* @throws BookStoreException
-	*             the book store exception
-	*/
+	 * Tests that a list of books with a certain feature can be retrieved.
+	 *
+	 * @throws BookStoreException
+	 *             the book store exception
+	 */
 	@Test
 	public void testGetCertainBooks() throws BookStoreException {
 		Set<StockBook> booksToAdd = new HashSet<StockBook>();
@@ -2594,11 +2586,11 @@ public class BookStoreTest {
 	}
 
 	/**
-	* Tests that books cannot be retrieved if ISBN is invalid.
-	*
-	* @throws BookStoreException
-	*             the book store exception
-	*/
+	 * Tests that books cannot be retrieved if ISBN is invalid.
+	 *
+	 * @throws BookStoreException
+	 *             the book store exception
+	 */
 	@Test
 	public void testGetInvalidIsbn() throws BookStoreException {
 		List<StockBook> booksInStorePreTest = storeManager.getBooks();
@@ -2624,11 +2616,11 @@ public class BookStoreTest {
 	}
 
 	/**
-	* Tear down after class.
-	*
-	* @throws BookStoreException
-	*             the book store exception
-	*/
+	 * Tear down after class.
+	 *
+	 * @throws BookStoreException
+	 *             the book store exception
+	 */
 	@AfterClass
 	public static void tearDownAfterClass() throws BookStoreException {
 		storeManager.removeAllBooks();
@@ -2637,6 +2629,391 @@ public class BookStoreTest {
 			((BookStoreHTTPProxy) client).stop();
 			((StockManagerHTTPProxy) storeManager).stop();
 		}
+	}
+}
+
+
+## com/acertainbookstore/client/tests/ConcurrentBookStoreTest.java
+package com.acertainbookstore.client.tests;
+
+import static org.junit.Assert.*;
+
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
+
+import org.junit.After;
+import org.junit.AfterClass;
+import org.junit.Before;
+import org.junit.BeforeClass;
+import org.junit.Test;
+
+import com.acertainbookstore.business.BookCopy;
+import com.acertainbookstore.business.ImmutableStockBook;
+import com.acertainbookstore.business.SingleLockConcurrentCertainBookStore;
+import com.acertainbookstore.business.StockBook;
+import com.acertainbookstore.business.TwoLevelLockingConcurrentCertainBookStore;
+import com.acertainbookstore.client.BookStoreHTTPProxy;
+import com.acertainbookstore.client.StockManagerHTTPProxy;
+import com.acertainbookstore.interfaces.BookStore;
+import com.acertainbookstore.interfaces.StockManager;
+import com.acertainbookstore.utils.BookStoreConstants;
+import com.acertainbookstore.utils.BookStoreException;
+
+/**
+ * Concurrency tests for Programming Assignment 2.
+ *
+ * Implements:
+ *  Test 1: buyBooks vs addCopies on same set S, fixed number of operations.
+ *  Test 2: writer alternates buy + replenish, reader checks snapshot consistency.
+ */
+public class ConcurrentBookStoreTest {
+
+	/** The local test. */
+	private static boolean localTest = true;
+
+	/** Single lock test flag */
+	private static boolean singleLock = true;
+
+	/** The store manager. */
+	private static StockManager storeManager;
+
+	/** The client. */
+	private static BookStore client;
+
+	// ----------- Test parameters (overridable with system properties) -----------
+
+	/**
+	 * Number of operations each thread should perform in Test 1.
+	 * Override with: -Dconcurrencytest.ops=2000
+	 */
+	private static final int DEFAULT_TEST1_OPS = 1000;
+
+	/**
+	 * Number of reader snapshots to check in Test 2.
+	 * Override with: -Dconcurrencytest.snapshots=50000
+	 */
+	private static final int DEFAULT_TEST2_SNAPSHOTS = 20000;
+
+	/**
+	 * How many buy+replenish cycles the writer attempts (upper bound).
+	 * Override with: -Dconcurrencytest.cycles=5000
+	 */
+	private static final int DEFAULT_TEST2_CYCLES = 5000;
+
+	private static int getIntProperty(String key, int defaultVal) {
+		String p = System.getProperty(key);
+		if (p == null) return defaultVal;
+		try {
+			int v = Integer.parseInt(p);
+			return (v > 0) ? v : defaultVal;
+		} catch (NumberFormatException ex) {
+			return defaultVal;
+		}
+	}
+
+	@BeforeClass
+	public static void setUpBeforeClass() {
+		try {
+			String localTestProperty = System.getProperty(BookStoreConstants.PROPERTY_KEY_LOCAL_TEST);
+			localTest = (localTestProperty != null) ? Boolean.parseBoolean(localTestProperty) : localTest;
+
+			String singleLockProperty = System.getProperty(BookStoreConstants.PROPERTY_KEY_SINGLE_LOCK);
+			singleLock = (singleLockProperty != null) ? Boolean.parseBoolean(singleLockProperty) : singleLock;
+
+			if (localTest) {
+				if (singleLock) {
+					SingleLockConcurrentCertainBookStore store = new SingleLockConcurrentCertainBookStore();
+					storeManager = store;
+					client = store;
+				} else {
+					TwoLevelLockingConcurrentCertainBookStore store = new TwoLevelLockingConcurrentCertainBookStore();
+					storeManager = store;
+					client = store;
+				}
+			} else {
+				storeManager = new StockManagerHTTPProxy("http://localhost:8081/stock");
+				client = new BookStoreHTTPProxy("http://localhost:8081");
+			}
+
+			storeManager.removeAllBooks();
+		} catch (Exception e) {
+			e.printStackTrace();
+			fail("Failed to set up test environment: " + e.getMessage());
+		}
+	}
+
+	@Before
+	public void clearStoreBeforeEach() throws BookStoreException {
+		storeManager.removeAllBooks();
+	}
+
+	@After
+	public void clearStoreAfterEach() throws BookStoreException {
+		storeManager.removeAllBooks();
+	}
+
+	@AfterClass
+	public static void tearDownAfterClass() throws BookStoreException {
+		storeManager.removeAllBooks();
+
+		if (!localTest) {
+			((BookStoreHTTPProxy) client).stop();
+			((StockManagerHTTPProxy) storeManager).stop();
+		}
+	}
+
+	// ---------------------------- Helpers ----------------------------
+
+	private void addBooksToStore(Set<StockBook> books) throws BookStoreException {
+		storeManager.addBooks(books);
+	}
+
+	private Set<StockBook> makeBookSet(int[] isbns, String titlePrefix, int initialCopies) {
+		Set<StockBook> books = new HashSet<>();
+		int idx = 0;
+		for (int isbn : isbns) {
+			books.add(new ImmutableStockBook(
+					isbn,
+					titlePrefix + " " + idx,
+					"Concurrent Author",
+					10.0f,
+					initialCopies,
+					0, 0, 0,
+					false
+			));
+			idx++;
+		}
+		return books;
+	}
+
+	private Set<BookCopy> makeOneCopyEach(int[] isbns) {
+		Set<BookCopy> copies = new HashSet<>();
+		for (int isbn : isbns) {
+			copies.add(new BookCopy(isbn, 1));
+		}
+		return copies;
+	}
+
+	private Set<BookCopy> makeNCopiesEach(int[] isbns, int n) {
+		Set<BookCopy> copies = new HashSet<>();
+		for (int isbn : isbns) {
+			copies.add(new BookCopy(isbn, n));
+		}
+		return copies;
+	}
+
+	private List<StockBook> getStockByISBN(int[] isbns) throws BookStoreException {
+		Set<Integer> set = new HashSet<>();
+		for (int isbn : isbns) set.add(isbn);
+		return storeManager.getBooksByISBN(set);
+	}
+
+	private void assertAllCopiesEqual(int[] isbns, int expectedCopies) throws BookStoreException {
+		List<StockBook> books = getStockByISBN(isbns);
+		assertEquals("Unexpected number of books in store", isbns.length, books.size());
+		for (StockBook b : books) {
+			assertEquals("Wrong final copies for ISBN " + b.getISBN(), expectedCopies, b.getNumCopies());
+		}
+	}
+
+	// ---------------------------- Test 1 ----------------------------
+	/**
+	 * Test 1:
+	 * Two clients C1 and C2, running in different threads, each invoke a fixed number
+	 * of operations against the BookStore and StockManager interfaces.
+	 * Both operate against the same set of books S.
+	 *
+	 * C1 calls buyBooks, while C2 calls addCopies on S.
+	 *
+	 * The initial state should have a sufficient number of copies.
+	 * In the end, S should end with the same number of copies in stock as they started.
+	 */
+	@Test
+	public void testConcurrentBuyAndAddCopiesFixedOps() throws Exception {
+		final int ops = getIntProperty("concurrencytest.ops", DEFAULT_TEST1_OPS);
+
+		// Shared set S
+		final int[] isbns = new int[] { 1001, 1002, 1003 };
+
+		// Make initial large enough for all buys to succeed even without help.
+		final int initialCopies = ops + 10;
+
+		addBooksToStore(makeBookSet(isbns, "Test1 Book", initialCopies));
+
+		final Set<BookCopy> oneCopyEach = makeOneCopyEach(isbns);
+
+		final CountDownLatch startGate = new CountDownLatch(1);
+		final CountDownLatch doneGate = new CountDownLatch(2);
+		final AtomicReference<Throwable> threadFailure = new AtomicReference<>(null);
+
+		Runnable buyer = () -> {
+			try {
+				startGate.await();
+				for (int i = 0; i < ops; i++) {
+					client.buyBooks(oneCopyEach);
+				}
+			} catch (Throwable t) {
+				threadFailure.compareAndSet(null, t);
+			} finally {
+				doneGate.countDown();
+			}
+		};
+
+		Runnable adder = () -> {
+			try {
+				startGate.await();
+				for (int i = 0; i < ops; i++) {
+					storeManager.addCopies(oneCopyEach);
+				}
+			} catch (Throwable t) {
+				threadFailure.compareAndSet(null, t);
+			} finally {
+				doneGate.countDown();
+			}
+		};
+
+		Thread t1 = new Thread(buyer, "Test1-Buyer");
+		Thread t2 = new Thread(adder, "Test1-Adder");
+
+		t1.start();
+		t2.start();
+
+		startGate.countDown();
+
+		boolean finished = doneGate.await(60, TimeUnit.SECONDS);
+		assertTrue("Test 1 threads did not finish in time", finished);
+
+		if (threadFailure.get() != null) {
+			fail("Thread failure in Test 1: " + threadFailure.get());
+		}
+
+		// Final stock should match the initial stock per book.
+		assertAllCopiesEqual(isbns, initialCopies);
+	}
+
+	// ---------------------------- Test 2 ----------------------------
+	/**
+	 * Test 2:
+	 * Two clients C1 and C2, running in different threads, continuously invoke operations.
+	 *
+	 * C1:
+	 *  - buy a given fixed collection of books (e.g., trilogy)
+	 *  - then addCopies to replenish the stock of the bought books
+	 *
+	 * C2:
+	 *  - continuously reads snapshots (we use getBooksByISBN for quantities)
+	 *  - ensures that each snapshot is consistent:
+	 *      Either all books look like "just bought" OR all look like "just replenished"
+	 *
+	 * Test fails immediately if an inconsistent snapshot is observed.
+	 * Succeeds after a large number of consistent reads.
+	 */
+	@Test
+	public void testConsistentSnapshotsDuringBuyAndReplenish() throws Exception {
+		final int snapshotsToCheck = getIntProperty("concurrencytest.snapshots", DEFAULT_TEST2_SNAPSHOTS);
+		final int writerCyclesMax = getIntProperty("concurrencytest.cycles", DEFAULT_TEST2_CYCLES);
+
+		// Fixed collection (e.g., trilogy)
+		final int[] isbns = new int[] { 2001, 2002, 2003 };
+
+		// Choose a simple two-state model:
+		// baseCopies: "replenished" state
+		// baseCopies - 1: "just bought" state
+		final int baseCopies = 10;
+
+		addBooksToStore(makeBookSet(isbns, "Test2 Book", baseCopies));
+
+		final Set<BookCopy> oneCopyEach = makeOneCopyEach(isbns);
+
+		final CountDownLatch startGate = new CountDownLatch(1);
+		final AtomicBoolean keepRunning = new AtomicBoolean(true);
+		final AtomicReference<Throwable> threadFailure = new AtomicReference<>(null);
+
+		Runnable writer = () -> {
+			try {
+				startGate.await();
+
+				int cycles = 0;
+				while (keepRunning.get() && cycles < writerCyclesMax) {
+					// Buy 1 of each
+					client.buyBooks(oneCopyEach);
+					// Replenish 1 of each
+					storeManager.addCopies(oneCopyEach);
+					cycles++;
+				}
+			} catch (Throwable t) {
+				threadFailure.compareAndSet(null, t);
+			}
+		};
+
+		Runnable reader = () -> {
+			try {
+				startGate.await();
+
+				for (int i = 0; i < snapshotsToCheck; i++) {
+					List<StockBook> snapshot = getStockByISBN(isbns);
+
+					// We expect exactly 3 books
+					if (snapshot.size() != isbns.length) {
+						throw new AssertionError("Unexpected snapshot size: " + snapshot.size());
+					}
+
+					// Capture the observed copies for the trilogy in this snapshot
+					int[] copies = new int[isbns.length];
+					for (int j = 0; j < snapshot.size(); j++) {
+						copies[j] = snapshot.get(j).getNumCopies();
+					}
+
+					// The snapshot is consistent if:
+					//   - all are baseCopies
+					//   - OR all are baseCopies - 1
+					boolean allBase = true;
+					boolean allBought = true;
+
+					for (int c : copies) {
+						if (c != baseCopies) allBase = false;
+						if (c != baseCopies - 1) allBought = false;
+					}
+
+					if (!(allBase || allBought)) {
+						throw new AssertionError(
+								"Inconsistent snapshot observed: " + Arrays.toString(copies)
+								+ " expected all " + baseCopies + " or all " + (baseCopies - 1)
+						);
+					}
+				}
+			} catch (Throwable t) {
+				threadFailure.compareAndSet(null, t);
+			} finally {
+				keepRunning.set(false);
+			}
+		};
+
+		Thread tWriter = new Thread(writer, "Test2-Writer");
+		Thread tReader = new Thread(reader, "Test2-Reader");
+
+		tWriter.start();
+		tReader.start();
+
+		startGate.countDown();
+
+		// Join with timeouts to avoid hanging tests
+		tReader.join(TimeUnit.SECONDS.toMillis(60));
+		keepRunning.set(false);
+		tWriter.join(TimeUnit.SECONDS.toMillis(60));
+
+		if (threadFailure.get() != null) {
+			fail("Thread failure in Test 2: " + threadFailure.get());
+		}
+
+		// If we got here, we observed enough consistent snapshots.
+		assertTrue(true);
 	}
 }
 
@@ -2671,10 +3048,10 @@ import com.acertainbookstore.utils.BookStoreConstants;
 import com.acertainbookstore.utils.BookStoreException;
 
 /**
-* {@StockManagerTest} tests the {@link StockManager} interface.
-*
-* @see StockManager
-*/
+ * {@StockManagerTest} tests the {@link StockManager} interface.
+ *
+ * @see StockManager
+ */
 public class StockManagerTest {
 
 	/** The Constant TEST_ISBN. */
@@ -2693,8 +3070,8 @@ public class StockManagerTest {
 	private static BookStore client;
 
 	/**
-	* Initializes a new instance.
-	*/
+	 * Initializes a new instance.
+	 */
 	@BeforeClass
 	public static void setUpBeforeClass() {
 		try {
@@ -2717,21 +3094,21 @@ public class StockManagerTest {
 	}
 
 	/**
-	* Helper method to get the default book used by initializeBooks.
-	*
-	* @return the default book
-	*/
+	 * Helper method to get the default book used by initializeBooks.
+	 *
+	 * @return the default book
+	 */
 	public StockBook getDefaultBook() {
 		return new ImmutableStockBook(TEST_ISBN, "Harry Potter and JUnit", "JK Unit", (float) 10, NUM_COPIES, 0, 0, 0,
 				false);
 	}
 
 	/**
-	* Method to add a book, executed before every test case is run.
-	*
-	* @throws BookStoreException
-	*             the book store exception
-	*/
+	 * Method to add a book, executed before every test case is run.
+	 *
+	 * @throws BookStoreException
+	 *             the book store exception
+	 */
 	@Before
 	public void initializeBooks() throws BookStoreException {
 		Set<StockBook> booksToAdd = new HashSet<StockBook>();
@@ -2741,22 +3118,22 @@ public class StockManagerTest {
 	}
 
 	/**
-	* Method to clean up the book store, execute after every test case is run.
-	*
-	* @throws BookStoreException
-	*             the book store exception
-	*/
+	 * Method to clean up the book store, execute after every test case is run.
+	 *
+	 * @throws BookStoreException
+	 *             the book store exception
+	 */
 	@After
 	public void cleanupBooks() throws BookStoreException {
 		storeManager.removeAllBooks();
 	}
 
 	/**
-	* Checks whether the insertion of a books with initialize books worked.
-	*
-	* @throws BookStoreException
-	*             the book store exception
-	*/
+	 * Checks whether the insertion of a books with initialize books worked.
+	 *
+	 * @throws BookStoreException
+	 *             the book store exception
+	 */
 	@Test
 	public void testInitializeBooks() throws BookStoreException {
 		List<StockBook> addedBooks = new ArrayList<StockBook>();
@@ -2769,11 +3146,11 @@ public class StockManagerTest {
 	}
 
 	/**
-	* Checks whether an insertion of a books with an invalid ISBN is rejected.
-	*
-	* @throws BookStoreException
-	*             the book store exception
-	*/
+	 * Checks whether an insertion of a books with an invalid ISBN is rejected.
+	 *
+	 * @throws BookStoreException
+	 *             the book store exception
+	 */
 	@Test
 	public void testaddBookInvalidISBN() throws BookStoreException {
 		List<StockBook> booksInStorePreTest = storeManager.getBooks();
@@ -2803,12 +3180,12 @@ public class StockManagerTest {
 	}
 
 	/**
-	* Checks whether the insertion of a book with a negative number of copies
-	* is rejected.
-	*
-	* @throws BookStoreException
-	*             the book store exception
-	*/
+	 * Checks whether the insertion of a book with a negative number of copies
+	 * is rejected.
+	 *
+	 * @throws BookStoreException
+	 *             the book store exception
+	 */
 	@Test
 	public void testAddBookInvalidCopies() throws BookStoreException {
 		List<StockBook> booksInStorePreTest = storeManager.getBooks();
@@ -2834,11 +3211,11 @@ public class StockManagerTest {
 	}
 
 	/**
-	* Checks whether a book with negative price can be added.
-	*
-	* @throws BookStoreException
-	*             the book store exception
-	*/
+	 * Checks whether a book with negative price can be added.
+	 *
+	 * @throws BookStoreException
+	 *             the book store exception
+	 */
 	@Test
 	public void testAddBookInvalidPrice() throws BookStoreException {
 		List<StockBook> booksInStorePreTest = storeManager.getBooks();
@@ -2864,11 +3241,11 @@ public class StockManagerTest {
 	}
 
 	/**
-	* Tests adding copies of a book with correct parameters.
-	*
-	* @throws BookStoreException
-	*             the book store exception
-	*/
+	 * Tests adding copies of a book with correct parameters.
+	 *
+	 * @throws BookStoreException
+	 *             the book store exception
+	 */
 	@Test
 	public void testAddCopiesCorrectBook() throws BookStoreException {
 		// Add a copy of a book
@@ -2901,12 +3278,12 @@ public class StockManagerTest {
 	}
 
 	/**
-	* Checks whether the insertion of a negative number of copies with
-	* addCopies (N.B. not addBooks as above) is rejected
-	*
-	* @throws BookStoreException
-	*             the book store exception
-	*/
+	 * Checks whether the insertion of a negative number of copies with
+	 * addCopies (N.B. not addBooks as above) is rejected
+	 *
+	 * @throws BookStoreException
+	 *             the book store exception
+	 */
 	@Test
 	public void testAddCopiesInvalidNumCopies() throws BookStoreException {
 		List<StockBook> booksInStorePreTest = storeManager.getBooks();
@@ -2929,12 +3306,12 @@ public class StockManagerTest {
 	}
 
 	/**
-	* Checks whether the insertion of a number of copies for an invalid ISBN
-	* with addCopies (N.B. not addBooks as above) is rejected
-	*
-	* @throws BookStoreException
-	*             the book store exception
-	*/
+	 * Checks whether the insertion of a number of copies for an invalid ISBN
+	 * with addCopies (N.B. not addBooks as above) is rejected
+	 *
+	 * @throws BookStoreException
+	 *             the book store exception
+	 */
 	@Test
 	public void testAddCopiesInvalidISBN() throws BookStoreException {
 		List<StockBook> booksInStorePreTest = storeManager.getBooks();
@@ -2957,12 +3334,12 @@ public class StockManagerTest {
 	}
 
 	/**
-	* Checks whether the insertion of a number of copies with an ISBN not in
-	* the system (N.B. not addBooks as above) is rejected
-	*
-	* @throws BookStoreException
-	*             the book store exception
-	*/
+	 * Checks whether the insertion of a number of copies with an ISBN not in
+	 * the system (N.B. not addBooks as above) is rejected
+	 *
+	 * @throws BookStoreException
+	 *             the book store exception
+	 */
 	@Test
 	public void testAddCopiesNonExistingISBN() throws BookStoreException {
 		List<StockBook> booksInStorePreTest = storeManager.getBooks();
@@ -2986,15 +3363,15 @@ public class StockManagerTest {
 	}
 
 	/**
-	* Helper method to make an Editor's pick.
-	*
-	* @param isbn
-	*            the ISBN
-	* @param pick
-	*            the pick
-	* @throws BookStoreException
-	*             the book store exception
-	*/
+	 * Helper method to make an Editor's pick.
+	 *
+	 * @param isbn
+	 *            the ISBN
+	 * @param pick
+	 *            the pick
+	 * @throws BookStoreException
+	 *             the book store exception
+	 */
 	public void addEditorPick(int isbn, boolean pick) throws BookStoreException {
 		Set<BookEditorPick> editorPicksVals = new HashSet<BookEditorPick>();
 		BookEditorPick editorPick = new BookEditorPick(isbn, pick);
@@ -3003,11 +3380,11 @@ public class StockManagerTest {
 	}
 
 	/**
-	* Tests the basic editor pick functionality.
-	*
-	* @throws BookStoreException
-	*             the book store exception
-	*/
+	 * Tests the basic editor pick functionality.
+	 *
+	 * @throws BookStoreException
+	 *             the book store exception
+	 */
 	@Test
 	public void testDefaultBookForEditorsPick() throws BookStoreException {
 
@@ -3029,11 +3406,11 @@ public class StockManagerTest {
 	}
 
 	/**
-	* Checks that a book can be removed.
-	*
-	* @throws BookStoreException
-	*             the book store exception
-	*/
+	 * Checks that a book can be removed.
+	 *
+	 * @throws BookStoreException
+	 *             the book store exception
+	 */
 	@Test
 	public void testRemoveBooks() throws BookStoreException {
 		List<StockBook> booksAdded = new ArrayList<StockBook>();
@@ -3073,11 +3450,11 @@ public class StockManagerTest {
 	}
 
 	/**
-	* Tests basic getBooksByISBN for the default book.
-	*
-	* @throws BookStoreException
-	*             the book store exception
-	*/
+	 * Tests basic getBooksByISBN for the default book.
+	 *
+	 * @throws BookStoreException
+	 *             the book store exception
+	 */
 	@Test
 	public void testGetBooksByISBN() throws BookStoreException {
 		Set<StockBook> booksToAdd = new HashSet<StockBook>();
@@ -3096,11 +3473,11 @@ public class StockManagerTest {
 	}
 
 	/**
-	* Tests basic removeAllBooks functionality.
-	*
-	* @throws BookStoreException
-	*             the book store exception
-	*/
+	 * Tests basic removeAllBooks functionality.
+	 *
+	 * @throws BookStoreException
+	 *             the book store exception
+	 */
 	@Test
 	public void testRemoveAllBooks() throws BookStoreException {
 		Set<StockBook> booksToAdd = new HashSet<StockBook>();
@@ -3120,11 +3497,11 @@ public class StockManagerTest {
 	}
 
 	/**
-	* Tear down after class.
-	*
-	* @throws BookStoreException
-	*             the book store exception
-	*/
+	 * Tear down after class.
+	 *
+	 * @throws BookStoreException
+	 *             the book store exception
+	 */
 	@AfterClass
 	public static void tearDownAfterClass() throws BookStoreException {
 		storeManager.removeAllBooks();
@@ -3149,63 +3526,63 @@ import com.acertainbookstore.business.BookRating;
 import com.acertainbookstore.utils.BookStoreException;
 
 /**
-* {@link BookStore} declares the methods exposed by the bookstore to the
-* clients. These methods need to be implemented by both server and client ends.
-*/
+ * {@link BookStore} declares the methods exposed by the bookstore to the
+ * clients. These methods need to be implemented by both server and client ends.
+ */
 public interface BookStore {
 
 	/**
-	* Buys the sets of books specified.
-	*
-	* @param booksToBuy
-	*            the books to buy
-	* @throws BookStoreException
-	*             the book store exception
-	*/
+	 * Buys the sets of books specified.
+	 *
+	 * @param booksToBuy
+	 *            the books to buy
+	 * @throws BookStoreException
+	 *             the book store exception
+	 */
 	public void buyBooks(Set<BookCopy> booksToBuy) throws BookStoreException;
 
 	/**
-	* Applies the BookRatings in the set, i.e. rates each book with their
-	* respective rating.
-	*
-	* @param bookRating
-	*            the book rating
-	* @throws BookStoreException
-	*             the book store exception
-	*/
+	 * Applies the BookRatings in the set, i.e. rates each book with their
+	 * respective rating.
+	 *
+	 * @param bookRating
+	 *            the book rating
+	 * @throws BookStoreException
+	 *             the book store exception
+	 */
 	public void rateBooks(Set<BookRating> bookRating) throws BookStoreException;
 
 	/**
-	* Gets the list of books corresponding to the set of ISBNs.
-	*
-	* @param ISBNList
-	*            the ISBN list
-	* @return the books
-	* @throws BookStoreException
-	*             the book store exception
-	*/
+	 * Gets the list of books corresponding to the set of ISBNs.
+	 *
+	 * @param ISBNList
+	 *            the ISBN list
+	 * @return the books
+	 * @throws BookStoreException
+	 *             the book store exception
+	 */
 	public List<Book> getBooks(Set<Integer> ISBNList) throws BookStoreException;
 
 	/**
-	* Gets a list of top rated numBooks books.
-	*
-	* @param numBooks
-	*            the number of books
-	* @return the top rated books
-	* @throws BookStoreException
-	*             the book store exception
-	*/
+	 * Gets a list of top rated numBooks books.
+	 *
+	 * @param numBooks
+	 *            the number of books
+	 * @return the top rated books
+	 * @throws BookStoreException
+	 *             the book store exception
+	 */
 	public List<Book> getTopRatedBooks(int numBooks) throws BookStoreException;
 
 	/**
-	* Gets the list of books containing numBooks editor picks.
-	*
-	* @param numBooks
-	*            the number of books
-	* @return the editor picks
-	* @throws BookStoreException
-	*             the book store exception
-	*/
+	 * Gets the list of books containing numBooks editor picks.
+	 *
+	 * @param numBooks
+	 *            the number of books
+	 * @return the editor picks
+	 * @throws BookStoreException
+	 *             the book store exception
+	 */
 	public List<Book> getEditorPicks(int numBooks) throws BookStoreException;
 }
 
@@ -3216,31 +3593,31 @@ package com.acertainbookstore.interfaces;
 import java.io.IOException;
 
 /**
-* {@link BookStoreSerializer} specifies the serialization and de-serialization
-* contracts.
-*/
+ * {@link BookStoreSerializer} specifies the serialization and de-serialization
+ * contracts.
+ */
 public interface BookStoreSerializer {
 
 	/**
-	* Serializes an object into a sequence of bytes.
-	*
-	* @param object
-	*            the object
-	* @return the byte[]
-	* @throws IOException
-	*             Signals that an I/O exception has occurred.
-	*/
+	 * Serializes an object into a sequence of bytes.
+	 *
+	 * @param object
+	 *            the object
+	 * @return the byte[]
+	 * @throws IOException
+	 *             Signals that an I/O exception has occurred.
+	 */
 	byte[] serialize(Object object) throws IOException;
 
 	/**
-	* De-serializes a sequence of bytes into an object.
-	*
-	* @param bytes
-	*            the bytes
-	* @return the object
-	* @throws IOException
-	*             Signals that an I/O exception has occurred.
-	*/
+	 * De-serializes a sequence of bytes into an object.
+	 *
+	 * @param bytes
+	 *            the bytes
+	 * @return the object
+	 * @throws IOException
+	 *             Signals that an I/O exception has occurred.
+	 */
 	Object deserialize(byte[] bytes) throws IOException;
 }
 
@@ -3257,87 +3634,87 @@ import com.acertainbookstore.business.StockBook;
 import com.acertainbookstore.utils.BookStoreException;
 
 /**
-* {@link StockManager} declares the methods exposed to be implemented by
-* clients who sell items in the book store.
-*/
+ * {@link StockManager} declares the methods exposed to be implemented by
+ * clients who sell items in the book store.
+ */
 public interface StockManager {
 
 	/**
-	* Adds the books in bookSet to the stock.
-	*
-	* @param bookSet
-	*            the book set
-	* @throws BookStoreException
-	*             the book store exception
-	*/
+	 * Adds the books in bookSet to the stock.
+	 *
+	 * @param bookSet
+	 *            the book set
+	 * @throws BookStoreException
+	 *             the book store exception
+	 */
 	public void addBooks(Set<StockBook> bookSet) throws BookStoreException;
 
 	/**
-	* Adds copies of the existing books to the bookstore.
-	*
-	* @param bookCopiesSet
-	*            the book copies set
-	* @throws BookStoreException
-	*             the book store exception
-	*/
+	 * Adds copies of the existing books to the bookstore.
+	 *
+	 * @param bookCopiesSet
+	 *            the book copies set
+	 * @throws BookStoreException
+	 *             the book store exception
+	 */
 	public void addCopies(Set<BookCopy> bookCopiesSet) throws BookStoreException;
 
 	/**
-	* Gets the list of books in the bookstore.
-	*
-	* @return the books
-	* @throws BookStoreException
-	*             the book store exception
-	*/
+	 * Gets the list of books in the bookstore.
+	 *
+	 * @return the books
+	 * @throws BookStoreException
+	 *             the book store exception
+	 */
 	public List<StockBook> getBooks() throws BookStoreException;
 
 	/**
-	* Gets the books matching the set of ISBNs given, is different to getBooks
-	* in the BookStore interface because of the return type of the books.
-	*
-	* @param isbns
-	*            the ISBNs
-	* @return the books by ISBN
-	* @throws BookStoreException
-	*             the book store exception
-	*/
+	 * Gets the books matching the set of ISBNs given, is different to getBooks
+	 * in the BookStore interface because of the return type of the books.
+	 *
+	 * @param isbns
+	 *            the ISBNs
+	 * @return the books by ISBN
+	 * @throws BookStoreException
+	 *             the book store exception
+	 */
 	public List<StockBook> getBooksByISBN(Set<Integer> isbns) throws BookStoreException;
 
 	/**
-	* Gets the list of books which has sale miss.
-	*
-	* @return the books in demand
-	* @throws BookStoreException
-	*             the book store exception
-	*/
+	 * Gets the list of books which has sale miss.
+	 *
+	 * @return the books in demand
+	 * @throws BookStoreException
+	 *             the book store exception
+	 */
 	public List<StockBook> getBooksInDemand() throws BookStoreException;
 
 	/**
-	* Updates the books by mark/unmark them as editor pick.
-	*
-	* @param editorPicks
-	*            the editor picks
-	* @throws BookStoreException
-	*             the book store exception
-	*/
+	 * Updates the books by mark/unmark them as editor pick.
+	 *
+	 * @param editorPicks
+	 *            the editor picks
+	 * @throws BookStoreException
+	 *             the book store exception
+	 */
 	public void updateEditorPicks(Set<BookEditorPick> editorPicks) throws BookStoreException;
 
 	/**
-	* Cleans up the bookstore - remove all the books and the associated data.
-	*
-	* @throws BookStoreException
-	*             the book store exception
-	*/
+	 * Cleans up the bookstore - remove all the books and the associated data.
+	 *
+	 * @throws BookStoreException
+	 *             the book store exception
+	 */
 	public void removeAllBooks() throws BookStoreException;
 
 	/**
-	* Cleans up the bookstore selectively for the list of provided ISBNs.
-	*
-	* @param isbnSet
-	*            the ISBN set
-	* @throws BookStoreException
-	*             the book store exception
-	*/
+	 * Cleans up the bookstore selectively for the list of provided ISBNs.
+	 *
+	 * @param isbnSet
+	 *            the ISBN set
+	 * @throws BookStoreException
+	 *             the book store exception
+	 */
 	public void removeBooks(Set<Integer> isbnSet) throws BookStoreException;
 }
 
@@ -3373,15 +3750,15 @@ import com.acertainbookstore.utils.BookStoreUtility;
 import com.esotericsoftware.kryo.io.Input;
 
 /**
-* {@link BookStoreHTTPMessageHandler} implements the message handler class
-* which is invoked to handle messages received by the
-* {@link BookStoreHTTPServerUtility}. It decodes the HTTP message and invokes
-* the {@link CertainBookStore} server API.
-*
-* @see AbstractHandler
-* @see BookStoreHTTPServerUtility
-* @see CertainBookStore
-*/
+ * {@link BookStoreHTTPMessageHandler} implements the message handler class
+ * which is invoked to handle messages received by the
+ * {@link BookStoreHTTPServerUtility}. It decodes the HTTP message and invokes
+ * the {@link CertainBookStore} server API.
+ *
+ * @see AbstractHandler
+ * @see BookStoreHTTPServerUtility
+ * @see CertainBookStore
+ */
 public class BookStoreHTTPMessageHandler extends AbstractHandler {
 	/** The book store. */
 	private BookStore bookStore = null;
@@ -3393,11 +3770,11 @@ public class BookStoreHTTPMessageHandler extends AbstractHandler {
 	private static ThreadLocal<BookStoreSerializer> serializer;
 
 	/**
-	* Instantiates a new {@link BookStoreHTTPMessageHandler}.
-	*
-	* @param bookStore
-	*            the book store
-	*/
+	 * Instantiates a new {@link BookStoreHTTPMessageHandler}.
+	 *
+	 * @param bookStore
+	 *            the book store
+	 */
 	public BookStoreHTTPMessageHandler(BookStore bookStore, StockManager stockManager) {
 		this.bookStore = bookStore;
 		this.stockManager = stockManager;
@@ -3411,12 +3788,12 @@ public class BookStoreHTTPMessageHandler extends AbstractHandler {
 	}
 
 	/*
-	* (non-Javadoc)
-	*
-	* @see org.eclipse.jetty.server.Handler#handle(java.lang.String,
-	* org.eclipse.jetty.server.Request, javax.servlet.http.HttpServletRequest,
-	* javax.servlet.http.HttpServletResponse)
-	*/
+	 * (non-Javadoc)
+	 *
+	 * @see org.eclipse.jetty.server.Handler#handle(java.lang.String,
+	 * org.eclipse.jetty.server.Request, javax.servlet.http.HttpServletRequest,
+	 * javax.servlet.http.HttpServletResponse)
+	 */
 	public void handle(String target, Request baseRequest, HttpServletRequest request, HttpServletResponse response)
 			throws IOException, ServletException {
 		BookStoreMessageTag messageTag;
@@ -3490,15 +3867,15 @@ public class BookStoreHTTPMessageHandler extends AbstractHandler {
 	}
 
 	/**
-	* Gets the stock books by ISBN.
-	*
-	* @param request
-	*            the request
-	* @param response
-	*            the response
-	* @throws IOException
-	*             Signals that an I/O exception has occurred.
-	*/
+	 * Gets the stock books by ISBN.
+	 *
+	 * @param request
+	 *            the request
+	 * @param response
+	 *            the response
+	 * @throws IOException
+	 *             Signals that an I/O exception has occurred.
+	 */
 	@SuppressWarnings("unchecked")
 	private void getStockBooksByISBN(HttpServletRequest request, HttpServletResponse response) throws IOException {
 		byte[] serializedRequestContent = getSerializedRequestContent(request);
@@ -3517,15 +3894,15 @@ public class BookStoreHTTPMessageHandler extends AbstractHandler {
 	}
 
 	/**
-	* Gets the editor picks.
-	*
-	* @param request
-	*            the request
-	* @param response
-	*            the response
-	* @throws IOException
-	*             Signals that an I/O exception has occurred.
-	*/
+	 * Gets the editor picks.
+	 *
+	 * @param request
+	 *            the request
+	 * @param response
+	 *            the response
+	 * @throws IOException
+	 *             Signals that an I/O exception has occurred.
+	 */
 	private void getEditorPicks(HttpServletRequest request, HttpServletResponse response) throws IOException {
 		String numBooksString = URLDecoder.decode(request.getParameter(BookStoreConstants.BOOK_NUM_PARAM), StandardCharsets.UTF_8);
 		BookStoreResponse bookStoreResponse = new BookStoreResponse();
@@ -3542,15 +3919,15 @@ public class BookStoreHTTPMessageHandler extends AbstractHandler {
 	}
 
 	/**
-	* Gets the books.
-	*
-	* @param request
-	*            the request
-	* @param response
-	*            the response
-	* @throws IOException
-	*             Signals that an I/O exception has occurred.
-	*/
+	 * Gets the books.
+	 *
+	 * @param request
+	 *            the request
+	 * @param response
+	 *            the response
+	 * @throws IOException
+	 *             Signals that an I/O exception has occurred.
+	 */
 	@SuppressWarnings("unchecked")
 	private void getBooks(HttpServletRequest request, HttpServletResponse response) throws IOException {
 		byte[] serializedRequestContent = getSerializedRequestContent(request);
@@ -3569,15 +3946,15 @@ public class BookStoreHTTPMessageHandler extends AbstractHandler {
 	}
 
 	/**
-	* Buys books.
-	*
-	* @param request
-	*            the request
-	* @param response
-	*            the response
-	* @throws IOException
-	*             Signals that an I/O exception has occurred.
-	*/
+	 * Buys books.
+	 *
+	 * @param request
+	 *            the request
+	 * @param response
+	 *            the response
+	 * @throws IOException
+	 *             Signals that an I/O exception has occurred.
+	 */
 	@SuppressWarnings("unchecked")
 	private void buyBooks(HttpServletRequest request, HttpServletResponse response) throws IOException {
 		byte[] serializedRequestContent = getSerializedRequestContent(request);
@@ -3596,15 +3973,15 @@ public class BookStoreHTTPMessageHandler extends AbstractHandler {
 	}
 
 	/**
-	* Updates editor picks.
-	*
-	* @param request
-	*            the request
-	* @param response
-	*            the response
-	* @throws IOException
-	*             Signals that an I/O exception has occurred.
-	*/
+	 * Updates editor picks.
+	 *
+	 * @param request
+	 *            the request
+	 * @param response
+	 *            the response
+	 * @throws IOException
+	 *             Signals that an I/O exception has occurred.
+	 */
 	@SuppressWarnings("unchecked")
 	private void updateEditorPicks(HttpServletRequest request, HttpServletResponse response) throws IOException {
 		byte[] serializedRequestContent = getSerializedRequestContent(request);
@@ -3624,13 +4001,13 @@ public class BookStoreHTTPMessageHandler extends AbstractHandler {
 	}
 
 	/**
-	* Lists the books.
-	*
-	* @param response
-	*            the response
-	* @throws IOException
-	*             Signals that an I/O exception has occurred.
-	*/
+	 * Lists the books.
+	 *
+	 * @param response
+	 *            the response
+	 * @throws IOException
+	 *             Signals that an I/O exception has occurred.
+	 */
 	private void listBooks(HttpServletResponse response) throws IOException {
 		BookStoreResponse bookStoreResponse = new BookStoreResponse();
 		try {
@@ -3644,15 +4021,15 @@ public class BookStoreHTTPMessageHandler extends AbstractHandler {
 	}
 
 	/**
-	* Adds the copies.
-	*
-	* @param request
-	*            the request
-	* @param response
-	*            the response
-	* @throws IOException
-	*             Signals that an I/O exception has occurred.
-	*/
+	 * Adds the copies.
+	 *
+	 * @param request
+	 *            the request
+	 * @param response
+	 *            the response
+	 * @throws IOException
+	 *             Signals that an I/O exception has occurred.
+	 */
 	@SuppressWarnings("unchecked")
 	private void addCopies(HttpServletRequest request, HttpServletResponse response) throws IOException {
 		byte[] serializedRequestContent = getSerializedRequestContent(request);
@@ -3671,15 +4048,15 @@ public class BookStoreHTTPMessageHandler extends AbstractHandler {
 	}
 
 	/**
-	* Adds the books.
-	*
-	* @param request
-	*            the request
-	* @param response
-	*            the response
-	* @throws IOException
-	*             Signals that an I/O exception has occurred.
-	*/
+	 * Adds the books.
+	 *
+	 * @param request
+	 *            the request
+	 * @param response
+	 *            the response
+	 * @throws IOException
+	 *             Signals that an I/O exception has occurred.
+	 */
 	@SuppressWarnings("unchecked")
 	private void addBooks(HttpServletRequest request, HttpServletResponse response) throws IOException {
 		byte[] serializedRequestContent = getSerializedRequestContent(request);
@@ -3698,13 +4075,13 @@ public class BookStoreHTTPMessageHandler extends AbstractHandler {
 	}
 
 	/**
-	* Removes all books.
-	*
-	* @param response
-	*            the response
-	* @throws IOException
-	*             Signals that an I/O exception has occurred.
-	*/
+	 * Removes all books.
+	 *
+	 * @param response
+	 *            the response
+	 * @throws IOException
+	 *             Signals that an I/O exception has occurred.
+	 */
 	private void removeAllBooks(HttpServletResponse response) throws IOException {
 		BookStoreResponse bookStoreResponse = new BookStoreResponse();
 
@@ -3719,15 +4096,15 @@ public class BookStoreHTTPMessageHandler extends AbstractHandler {
 	}
 
 	/**
-	* Removes the books.
-	*
-	* @param request
-	*            the request
-	* @param response
-	*            the response
-	* @throws IOException
-	*             Signals that an I/O exception has occurred.
-	*/
+	 * Removes the books.
+	 *
+	 * @param request
+	 *            the request
+	 * @param response
+	 *            the response
+	 * @throws IOException
+	 *             Signals that an I/O exception has occurred.
+	 */
 	@SuppressWarnings("unchecked")
 	private void removeBooks(HttpServletRequest request, HttpServletResponse response) throws IOException {
 		byte[] serializedRequestContent = getSerializedRequestContent(request);
@@ -3746,12 +4123,12 @@ public class BookStoreHTTPMessageHandler extends AbstractHandler {
 	}
 
 	/**
-	* Gets the serialized request content.
-	*
-	* @param request the request
-	* @return the serialized request content
-	* @throws IOException Signals that an I/O exception has occurred.
-	*/
+	 * Gets the serialized request content.
+	 *
+	 * @param request the request
+	 * @return the serialized request content
+	 * @throws IOException Signals that an I/O exception has occurred.
+	 */
 	private byte[] getSerializedRequestContent(HttpServletRequest request) throws IOException {
 		Input in = new Input(request.getInputStream());
 		byte[] serializedRequestContent = in.readBytes(request.getContentLength());
@@ -3771,9 +4148,9 @@ import org.eclipse.jetty.util.thread.QueuedThreadPool;
 import com.acertainbookstore.utils.BookStoreConstants;
 
 /**
-* Starts the {@link BookStoreHTTPServer} that the clients will communicate
-* with.
-*/
+ * Starts the {@link BookStoreHTTPServer} that the clients will communicate
+ * with.
+ */
 public class BookStoreHTTPServer {
 
 	/** The Constant defaultListenOnPort. */
@@ -3782,23 +4159,23 @@ public class BookStoreHTTPServer {
 	private static final int MAX_THREADPOOL_SIZE = 100;
 
 	/** The constant, defining which locking scheme implementation to use
-	*  true - single lock
-	*  false - two-level locking */
+	 *  true - single lock
+	 *  false - two-level locking */
 	private static final boolean SINGLE_LOCK = true;
 
 	/**
-	* Prevents the instantiation of a new {@link BookStoreHTTPServer}.
-	*/
+	 * Prevents the instantiation of a new {@link BookStoreHTTPServer}.
+	 */
 	private BookStoreHTTPServer() {
 		// Prevent instances from being created.
 	}
 
 	/**
-	* The main method.
-	*
-	* @param args
-	*            the arguments
-	*/
+	 * The main method.
+	 *
+	 * @param args
+	 *            the arguments
+	 */
 	public static void main(String[] args) {
 		int listenOnPort = DEFAULT_PORT;
 
@@ -3807,7 +4184,7 @@ public class BookStoreHTTPServer {
 		if (SINGLE_LOCK) {
 			SingleLockConcurrentCertainBookStore bookStore = new SingleLockConcurrentCertainBookStore();
 			/* we pass bookStore to BookStoreHTTPMessageHandler constructor twice,
-			* since it implements both interfaces: BookStore and StockManager */
+			 * since it implements both interfaces: BookStore and StockManager */
 			handler = new BookStoreHTTPMessageHandler(bookStore, bookStore);
 		} else {
 			TwoLevelLockingConcurrentCertainBookStore bookStore = new TwoLevelLockingConcurrentCertainBookStore();
@@ -3843,26 +4220,26 @@ import org.eclipse.jetty.server.handler.AbstractHandler;
 import org.eclipse.jetty.util.thread.QueuedThreadPool;
 
 /**
-* {@link BookStoreHTTPServerUtility} creates Jetty server instances.
-*/
+ * {@link BookStoreHTTPServerUtility} creates Jetty server instances.
+ */
 public class BookStoreHTTPServerUtility {
 
 	/**
-	* Prevents the instantiation of a new {@link BookStoreHTTPServerUtility}.
-	*/
+	 * Prevents the instantiation of a new {@link BookStoreHTTPServerUtility}.
+	 */
 	private BookStoreHTTPServerUtility() {
 		// Prevent instances from being created.
 	}
 
 	/**
-	* Creates a server on the port and blocks the calling thread.
-	*
-	* @param port
-	*            the port
-	* @param handler
-	*            the handler
-	* @return true, if successful
-	*/
+	 * Creates a server on the port and blocks the calling thread.
+	 *
+	 * @param port
+	 *            the port
+	 * @param handler
+	 *            the handler
+	 * @return true, if successful
+	 */
 	public static void createServer(int port, AbstractHandler handler, QueuedThreadPool threadpool) {
 		Server server = null;
 		if (threadpool != null) {
@@ -3888,16 +4265,16 @@ public class BookStoreHTTPServerUtility {
 	}
 
 	/**
-	* Creates a server on the InetAddress and blocks the calling thread.
-	*
-	* @param ipAddress
-	*            the IP address
-	* @param port
-	*            the port
-	* @param handler
-	*            the handler
-	* @return true, if successful
-	*/
+	 * Creates a server on the InetAddress and blocks the calling thread.
+	 *
+	 * @param ipAddress
+	 *            the IP address
+	 * @param port
+	 *            the port
+	 * @param handler
+	 *            the handler
+	 * @return true, if successful
+	 */
 	public static boolean createServer(String ipAddress, int port, AbstractHandler handler) {
 		InetAddress inetIpAddress;
 		InetSocketAddress address;
@@ -3937,14 +4314,14 @@ public class BookStoreHTTPServerUtility {
 package com.acertainbookstore.utils;
 
 /**
-* BookStoreConstants declares the constants used in the CertainBookStore (by
-* both servers and clients).
-*/
+ * BookStoreConstants declares the constants used in the CertainBookStore (by
+ * both servers and clients).
+ */
 public final class BookStoreConstants {
 
 	/**
-	* The Constant BINARY_SERIALIZATION decides whether we use Kryo or XStream.
-	*/
+	 * The Constant BINARY_SERIALIZATION decides whether we use Kryo or XStream.
+	 */
 	public static final boolean BINARY_SERIALIZATION = true;
 
 	// Constants used when creating URLs
@@ -3959,9 +4336,9 @@ public final class BookStoreConstants {
 	public static final String XMLSTRINGLEN_PARAM = "len";
 
 	/**
-	* The Constant INVALID_PARAMS used as error code when converting numbers to
-	* integer.
-	*/
+	 * The Constant INVALID_PARAMS used as error code when converting numbers to
+	 * integer.
+	 */
 	public static final int INVALID_PARAMS = -1;
 
 	// Constants used when creating exception messages
@@ -4003,8 +4380,8 @@ public final class BookStoreConstants {
 	public static final float EPSILON = 0.000001F;
 
 	/**
-	* Prevents the instantiation of a new {@link BookStoreConstants}.
-	*/
+	 * Prevents the instantiation of a new {@link BookStoreConstants}.
+	 */
 	private BookStoreConstants() {
 		// Prevent instantiation.
 	}
@@ -4015,48 +4392,48 @@ public final class BookStoreConstants {
 package com.acertainbookstore.utils;
 
 /**
-* {@link BookStoreException} signals a book store error.
-*/
+ * {@link BookStoreException} signals a book store error.
+ */
 public class BookStoreException extends Exception {
 
 	/** The Constant serialVersionUID. */
 	private static final long serialVersionUID = 1L;
 
 	/**
-	* Instantiates a new {@link BookStoreException}.
-	*/
+	 * Instantiates a new {@link BookStoreException}.
+	 */
 	public BookStoreException() {
 		super();
 	}
 
 	/**
-	* Instantiates a new {@link BookStoreException}.
-	*
-	* @param message
-	*            the message
-	*/
+	 * Instantiates a new {@link BookStoreException}.
+	 *
+	 * @param message
+	 *            the message
+	 */
 	public BookStoreException(String message) {
 		super(message);
 	}
 
 	/**
-	* Instantiates a new {@link BookStoreException}.
-	*
-	* @param message
-	*            the message
-	* @param cause
-	*            the cause
-	*/
+	 * Instantiates a new {@link BookStoreException}.
+	 *
+	 * @param message
+	 *            the message
+	 * @param cause
+	 *            the cause
+	 */
 	public BookStoreException(String message, Throwable cause) {
 		super(message, cause);
 	}
 
 	/**
-	* Instantiates a new {@link BookStoreException}.
-	*
-	* @param ex
-	*            the exception
-	*/
+	 * Instantiates a new {@link BookStoreException}.
+	 *
+	 * @param ex
+	 *            the exception
+	 */
 	public BookStoreException(Throwable ex) {
 		super(ex);
 	}
@@ -4078,19 +4455,19 @@ import com.esotericsoftware.kryo.io.Output;
 import org.objenesis.strategy.StdInstantiatorStrategy;
 
 /**
-* {@link BookStoreKryoSerializer} serializes objects to arrays of bytes
-* representing strings using the Kryo library.
-*
-* @see BookStoreSerializer
-*/
+ * {@link BookStoreKryoSerializer} serializes objects to arrays of bytes
+ * representing strings using the Kryo library.
+ *
+ * @see BookStoreSerializer
+ */
 public final class BookStoreKryoSerializer implements BookStoreSerializer {
 
 	/** The binary stream. */
 	private final Kryo binaryStream;
 
 	/**
-	* Instantiates a new {@link BookStoreKryoSerializer}.
-	*/
+	 * Instantiates a new {@link BookStoreKryoSerializer}.
+	 */
 	public BookStoreKryoSerializer() {
 		binaryStream = new Kryo();
 		binaryStream.setInstantiatorStrategy(new Kryo.DefaultInstantiatorStrategy(new StdInstantiatorStrategy()));
@@ -4098,12 +4475,12 @@ public final class BookStoreKryoSerializer implements BookStoreSerializer {
 	}
 
 	/*
-	* (non-Javadoc)
-	*
-	* @see
-	* com.acertainbookstore.interfaces.BookStoreSerializer#serialize(java.lang.
-	* Object)
-	*/
+	 * (non-Javadoc)
+	 *
+	 * @see
+	 * com.acertainbookstore.interfaces.BookStoreSerializer#serialize(java.lang.
+	 * Object)
+	 */
 	@Override
 	public byte[] serialize(Object object) throws IOException {
 		try (ByteArrayOutputStream outStream = new ByteArrayOutputStream(); Output out = new Output(outStream)) {
@@ -4114,10 +4491,10 @@ public final class BookStoreKryoSerializer implements BookStoreSerializer {
 	}
 
 	/*
-	* (non-Javadoc)
-	*
-	* @see com.acertainbookstore.interfaces.BookStoreSerializer#deserialize(byte[])
-	*/
+	 * (non-Javadoc)
+	 *
+	 * @see com.acertainbookstore.interfaces.BookStoreSerializer#deserialize(byte[])
+	 */
 	@Override
 	public Object deserialize(byte[] bytes) throws IOException {
 		try (InputStream inStream = new ByteArrayInputStream(bytes); Input in = new Input(inStream)) {
@@ -4131,9 +4508,9 @@ public final class BookStoreKryoSerializer implements BookStoreSerializer {
 package com.acertainbookstore.utils;
 
 /**
-* {@link BookStoreMessageTag} implements the messages supported in the
-* bookstore.
-*/
+ * {@link BookStoreMessageTag} implements the messages supported in the
+ * bookstore.
+ */
 public enum BookStoreMessageTag {
 
 	/** The tag for the add book message. */
@@ -4174,9 +4551,9 @@ package com.acertainbookstore.utils;
 import org.eclipse.jetty.http.HttpMethod;
 
 /**
-* {@link BookStoreRequest} is the data structure that encapsulates a HTTP
-* request from the bookstore client to the server.
-*/
+ * {@link BookStoreRequest} is the data structure that encapsulates a HTTP
+ * request from the bookstore client to the server.
+ */
 public final class BookStoreRequest {
 
 	/** The method. */
@@ -4189,15 +4566,15 @@ public final class BookStoreRequest {
 	private final Object inputValue;
 
 	/**
-	* Instantiates a new {@link BookStoreRequest}.
-	*
-	* @param method
-	*            the method
-	* @param urlString
-	*            the URL string
-	* @param inputValue
-	*            the input value
-	*/
+	 * Instantiates a new {@link BookStoreRequest}.
+	 *
+	 * @param method
+	 *            the method
+	 * @param urlString
+	 *            the URL string
+	 * @param inputValue
+	 *            the input value
+	 */
 	private BookStoreRequest(HttpMethod method, String urlString, Object inputValue) {
 		this.method = method;
 		this.urlString = urlString;
@@ -4205,52 +4582,52 @@ public final class BookStoreRequest {
 	}
 
 	/**
-	* Gets the method.
-	*
-	* @return the method
-	*/
+	 * Gets the method.
+	 *
+	 * @return the method
+	 */
 	public HttpMethod getMethod() {
 		return method;
 	}
 
 	/**
-	* Gets the URL string.
-	*
-	* @return the URL string
-	*/
+	 * Gets the URL string.
+	 *
+	 * @return the URL string
+	 */
 	public String getURLString() {
 		return urlString;
 	}
 
 	/**
-	* Gets the input value.
-	*
-	* @return the input value
-	*/
+	 * Gets the input value.
+	 *
+	 * @return the input value
+	 */
 	public Object getInputValue() {
 		return inputValue;
 	}
 
 	/**
-	* Gets a new GET request.
-	*
-	* @param urlString
-	*            the URL string
-	* @return the book store request
-	*/
+	 * Gets a new GET request.
+	 *
+	 * @param urlString
+	 *            the URL string
+	 * @return the book store request
+	 */
 	public static BookStoreRequest newGetRequest(String urlString) {
 		return new BookStoreRequest(HttpMethod.GET, urlString, null);
 	}
 
 	/**
-	* Gets a new POST request.
-	*
-	* @param urlString
-	*            the URL string
-	* @param inputValue
-	*            the input value
-	* @return the book store request
-	*/
+	 * Gets a new POST request.
+	 *
+	 * @param urlString
+	 *            the URL string
+	 * @param inputValue
+	 *            the input value
+	 * @return the book store request
+	 */
 	public static BookStoreRequest newPostRequest(String urlString, Object inputValue) {
 		return new BookStoreRequest(HttpMethod.POST, urlString, inputValue);
 	}
@@ -4265,10 +4642,10 @@ import java.util.List;
 import com.acertainbookstore.business.Book;
 
 /**
-* {@link BookStoreResponse} is the data structure that encapsulates a HTTP
-* response from the bookstore server to the client. The data structure contains
-* error messages from the server if an error occurred.
-*/
+ * {@link BookStoreResponse} is the data structure that encapsulates a HTTP
+ * response from the bookstore server to the client. The data structure contains
+ * error messages from the server if an error occurred.
+ */
 public class BookStoreResponse {
 
 	/** The exception. */
@@ -4278,60 +4655,60 @@ public class BookStoreResponse {
 	private List<?> list;
 
 	/**
-	* Instantiates a new {@link BookStoreResponse}.
-	*
-	* @param exception
-	*            the exception
-	* @param list
-	*            the list
-	*/
+	 * Instantiates a new {@link BookStoreResponse}.
+	 *
+	 * @param exception
+	 *            the exception
+	 * @param list
+	 *            the list
+	 */
 	public BookStoreResponse(BookStoreException exception, List<Book> list) {
 		this.setException(exception);
 		this.setList(list);
 	}
 
 	/**
-	* Instantiates a new book store response.
-	*/
+	 * Instantiates a new book store response.
+	 */
 	public BookStoreResponse() {
 		this.setException(null);
 		this.setList(null);
 	}
 
 	/**
-	* Gets the list.
-	*
-	* @return the list
-	*/
+	 * Gets the list.
+	 *
+	 * @return the list
+	 */
 	public List<?> getList() {
 		return list;
 	}
 
 	/**
-	* Sets the list.
-	*
-	* @param list
-	*            the new list
-	*/
+	 * Sets the list.
+	 *
+	 * @param list
+	 *            the new list
+	 */
 	public void setList(List<?> list) {
 		this.list = list;
 	}
 
 	/**
-	* Gets the exception.
-	*
-	* @return the exception
-	*/
+	 * Gets the exception.
+	 *
+	 * @return the exception
+	 */
 	public BookStoreException getException() {
 		return exception;
 	}
 
 	/**
-	* Sets the exception.
-	*
-	* @param exception
-	*            the new exception
-	*/
+	 * Sets the exception.
+	 *
+	 * @param exception
+	 *            the new exception
+	 */
 	public void setException(BookStoreException exception) {
 		this.exception = exception;
 	}
@@ -4358,9 +4735,9 @@ import com.thoughtworks.xstream.XStream;
 import com.thoughtworks.xstream.io.xml.StaxDriver;
 
 /**
-* {@link BookStoreUtility} implements utility methods used by the bookstore
-* server and client.
-*/
+ * {@link BookStoreUtility} implements utility methods used by the bookstore
+ * server and client.
+ */
 public final class BookStoreUtility {
 
 	/** The Constant XmlStreams. */
@@ -4374,66 +4751,66 @@ public final class BookStoreUtility {
 	};
 
 	/**
-	* Prevents the instantiation of a new {@link BookStoreUtility}.
-	*/
+	 * Prevents the instantiation of a new {@link BookStoreUtility}.
+	 */
 	private BookStoreUtility() {
 		// Prevent instantiation.
 	}
 
 	/**
-	* Checks if is invalid ISBN.
-	*
-	* @param isbn
-	*            the ISBN
-	* @return true, if is invalid ISBN
-	*/
+	 * Checks if is invalid ISBN.
+	 *
+	 * @param isbn
+	 *            the ISBN
+	 * @return true, if is invalid ISBN
+	 */
 	public static boolean isInvalidISBN(int isbn) {
 		return isbn < 1;
 	}
 
 	/**
-	* Checks if is invalid rating.
-	*
-	* @param rating
-	*            the rating
-	* @return true, if is invalid rating
-	*/
+	 * Checks if is invalid rating.
+	 *
+	 * @param rating
+	 *            the rating
+	 * @return true, if is invalid rating
+	 */
 	public static boolean isInvalidRating(int rating) {
 		return rating < 0 || rating > 5;
 	}
 
 	/**
-	* Checks if is invalid no copies.
-	*
-	* @param copies
-	*            the copies
-	* @return true, if is invalid no copies
-	*/
+	 * Checks if is invalid no copies.
+	 *
+	 * @param copies
+	 *            the copies
+	 * @return true, if is invalid no copies
+	 */
 	public static boolean isInvalidNoCopies(int copies) {
 		return copies < 1;
 	}
 
 	/**
-	* Checks if a string is empty or null.
-	*
-	* @param str
-	*            the string
-	* @return true, if is empty
-	*/
+	 * Checks if a string is empty or null.
+	 *
+	 * @param str
+	 *            the string
+	 * @return true, if is empty
+	 */
 	public static boolean isEmpty(String str) {
 		return str == null || str.isEmpty();
 	}
 
 	/**
-	* Converts a string to a float if possible else it returns the signal value
-	* for failure passed as parameter.
-	*
-	* @param str
-	*            the string
-	* @param failureSignal
-	*            the failure signal
-	* @return the float
-	*/
+	 * Converts a string to a float if possible else it returns the signal value
+	 * for failure passed as parameter.
+	 *
+	 * @param str
+	 *            the string
+	 * @param failureSignal
+	 *            the failure signal
+	 * @return the float
+	 */
 	public static float convertStringToFloat(String str, float failureSignal) {
 		float returnValue = failureSignal;
 
@@ -4448,15 +4825,15 @@ public final class BookStoreUtility {
 	}
 
 	/**
-	* Converts a string to an integer if possible else it returns the signal
-	* value for failure passed as parameter.
-	*
-	* @param str
-	*            the string
-	* @return the integer
-	* @throws BookStoreException
-	*             the book store exception
-	*/
+	 * Converts a string to an integer if possible else it returns the signal
+	 * value for failure passed as parameter.
+	 *
+	 * @param str
+	 *            the string
+	 * @return the integer
+	 * @throws BookStoreException
+	 *             the book store exception
+	 */
 	public static int convertStringToInt(String str) throws BookStoreException {
 		int returnValue = 0;
 
@@ -4470,12 +4847,12 @@ public final class BookStoreUtility {
 	}
 
 	/**
-	* Convert a request URI to the message tags supported in CertainBookStore.
-	*
-	* @param requestURI
-	*            the request URI
-	* @return the book store message tag
-	*/
+	 * Convert a request URI to the message tags supported in CertainBookStore.
+	 *
+	 * @param requestURI
+	 *            the request URI
+	 * @return the book store message tag
+	 */
 	public static BookStoreMessageTag convertURItoMessageTag(String requestURI) {
 
 		try {
@@ -4490,18 +4867,18 @@ public final class BookStoreUtility {
 	}
 
 	/**
-	* Perform HTTP exchange.
-	*
-	* @param client
-	*            the client
-	* @param bookStoreRequest
-	*            the book store request
-	* @param serializer
-	*            the serializer
-	* @return the book store response
-	* @throws BookStoreException
-	*             the book store exception
-	*/
+	 * Perform HTTP exchange.
+	 *
+	 * @param client
+	 *            the client
+	 * @param bookStoreRequest
+	 *            the book store request
+	 * @param serializer
+	 *            the serializer
+	 * @return the book store response
+	 * @throws BookStoreException
+	 *             the book store exception
+	 */
 	public static BookStoreResponse performHttpExchange(HttpClient client, BookStoreRequest bookStoreRequest,
 			BookStoreSerializer serializer) throws BookStoreException {
 		Request request;
@@ -4565,23 +4942,23 @@ import com.thoughtworks.xstream.XStream;
 import com.thoughtworks.xstream.io.xml.StaxDriver;
 
 /**
-* {@link BookStoreXStreamSerializer} serializes objects to arrays of bytes
-* representing XML trees using the XStream library.
-*
-* @see BookStoreSerializer
-*/
+ * {@link BookStoreXStreamSerializer} serializes objects to arrays of bytes
+ * representing XML trees using the XStream library.
+ *
+ * @see BookStoreSerializer
+ */
 public final class BookStoreXStreamSerializer implements BookStoreSerializer {
 
 	/** The XML stream. */
 	private final XStream xmlStream = new XStream(new StaxDriver());
 
 	/*
-	* (non-Javadoc)
-	*
-	* @see
-	* com.acertainbookstore.interfaces.BookStoreSerializer#serialize(java.lang.
-	* Object)
-	*/
+	 * (non-Javadoc)
+	 *
+	 * @see
+	 * com.acertainbookstore.interfaces.BookStoreSerializer#serialize(java.lang.
+	 * Object)
+	 */
 	@Override
 	public byte[] serialize(Object object) {
 		String xml = xmlStream.toXML(object);
@@ -4589,11 +4966,11 @@ public final class BookStoreXStreamSerializer implements BookStoreSerializer {
 	}
 
 	/*
-	* (non-Javadoc)
-	*
-	* @see
-	* com.acertainbookstore.interfaces.BookStoreSerializer#deserialize(byte[])
-	*/
+	 * (non-Javadoc)
+	 *
+	 * @see
+	 * com.acertainbookstore.interfaces.BookStoreSerializer#deserialize(byte[])
+	 */
 	@Override
 	public Object deserialize(byte[] bytes) {
 		String xml = new String(bytes);
