@@ -5,6 +5,8 @@ import static org.junit.Assert.*;
 import java.util.HashSet;
 import java.util.Random;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 
 import org.junit.After;
 import org.junit.AfterClass;
@@ -112,16 +114,16 @@ public class MixedReadersWritersTest {
 
         addBooks(isbns, initialCopies);
 
-        final boolean[] failed = new boolean[] { false };
-        final String[] errorMsg = new String[] { null };
-        final boolean[] running = new boolean[] { true };
+        final AtomicBoolean failed = new AtomicBoolean(false);
+        final AtomicReference<String> errorMsg = new AtomicReference<String>(null);
+        final AtomicBoolean running = new AtomicBoolean(true);
 
-        Random rand = new Random();
+        Random rand = new Random(12345);
 
         Runnable writer = new Runnable() {
             public void run() {
                 try {
-                    for (int i = 0; i < writerIterations && running[0]; i++) {
+                    for (int i = 0; i < writerIterations && running.get(); i++) {
                         // pick random small subset
                         int a = rand.nextInt(numBooks);
                         int b = rand.nextInt(numBooks);
@@ -131,8 +133,8 @@ public class MixedReadersWritersTest {
                         storeManager.addCopies(toBuy);
                     }
                 } catch (BookStoreException e) {
-                    failed[0] = true;
-                    errorMsg[0] = "writer failed: " + e.getMessage();
+                    failed.set(true);
+                    errorMsg.set("writer failed: " + e.getMessage());
                 }
             }
         };
@@ -140,33 +142,37 @@ public class MixedReadersWritersTest {
         Runnable reader = new Runnable() {
             public void run() {
                 try {
-                    for (int i = 0; i < readerSnapshots && !failed[0]; i++) {
+                    for (int i = 0; i < readerSnapshots && !failed.get(); i++) {
                         // pick random distinct indices
                         Set<Integer> picksSet = new HashSet<Integer>();
                         while (picksSet.size() < 3) {
                             picksSet.add(rand.nextInt(numBooks));
                         }
-                        int[] picks = picksSet.stream().mapToInt(Integer::intValue).map(idx -> isbns[idx]).toArray();
+                        int[] picks = new int[picksSet.size()];
+                        int idx = 0;
+                        for (Integer pidx : picksSet) {
+                            picks[idx++] = isbns[pidx];
+                        }
                         List<StockBook> snapshot = getStockFor(picks);
                         if (snapshot.size() != picks.length) {
-                            failed[0] = true;
-                            errorMsg[0] = "unexpected size: " + snapshot.size();
+                            failed.set(true);
+                            errorMsg.set("unexpected size: " + snapshot.size());
                             return;
                         }
                         for (StockBook book : snapshot) {
                             int copies = book.getNumCopies();
                             if (copies < 0) {
-                                failed[0] = true;
-                                errorMsg[0] = "invalid copies: " + copies;
+                                failed.set(true);
+                                errorMsg.set("invalid copies: " + copies);
                                 return;
                             }
                         }
                     }
                 } catch (BookStoreException e) {
-                    failed[0] = true;
-                    errorMsg[0] = "reader failed: " + e.getMessage();
+                    failed.set(true);
+                    errorMsg.set("reader failed: " + e.getMessage());
                 } finally {
-                    running[0] = false;
+                    running.set(false);
                 }
             }
         };
@@ -184,10 +190,10 @@ public class MixedReadersWritersTest {
         }
 
         for (int i = 0; i < readerThreads; i++) rts[i].join();
-        running[0] = false;
+        running.set(false);
         for (int i = 0; i < writerThreads; i++) wts[i].join();
 
-        if (failed[0]) fail(errorMsg[0]);
+        if (failed.get()) fail(errorMsg.get());
 
         List<StockBook> finalStock = getStockFor(isbns);
         assertEquals(numBooks, finalStock.size());

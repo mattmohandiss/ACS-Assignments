@@ -4,6 +4,8 @@ import static org.junit.Assert.*;
 
 import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 
 import org.junit.After;
 import org.junit.AfterClass;
@@ -114,8 +116,8 @@ public class DisjointWritersTest {
 
         addBooks(allIsbns, initialCopies);
 
-        final boolean[] failed = new boolean[] { false };
-        final String[] errorMsg = new String[] { null };
+        final AtomicBoolean failed = new AtomicBoolean(false);
+        final AtomicReference<String> errorMsg = new AtomicReference<String>(null);
 
         Thread[] ts = new Thread[threads];
         for (int t = 0; t < threads; t++) {
@@ -131,8 +133,8 @@ public class DisjointWritersTest {
                             storeManager.addCopies(oneOfEach);
                         }
                     } catch (BookStoreException e) {
-                        failed[0] = true;
-                        errorMsg[0] = "Writer thread failed: " + e.getMessage();
+                        failed.set(true);
+                        errorMsg.set("Writer thread failed: " + e.getMessage());
                     }
                 }
             }, "writer-" + t);
@@ -141,7 +143,7 @@ public class DisjointWritersTest {
 
         for (int t = 0; t < threads; t++) ts[t].join();
 
-        if (failed[0]) fail(errorMsg[0]);
+        if (failed.get()) fail(errorMsg.get());
 
         List<StockBook> finalStock = getStockFor(allIsbns);
         assertEquals(allIsbns.length, finalStock.size());
