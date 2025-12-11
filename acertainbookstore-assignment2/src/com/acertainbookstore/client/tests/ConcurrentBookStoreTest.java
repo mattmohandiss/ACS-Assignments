@@ -2,14 +2,9 @@ package com.acertainbookstore.client.tests;
 
 import static org.junit.Assert.*;
 
-import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicReference;
 
 import org.junit.After;
 import org.junit.AfterClass;
@@ -22,361 +17,255 @@ import com.acertainbookstore.business.ImmutableStockBook;
 import com.acertainbookstore.business.SingleLockConcurrentCertainBookStore;
 import com.acertainbookstore.business.StockBook;
 import com.acertainbookstore.business.TwoLevelLockingConcurrentCertainBookStore;
-import com.acertainbookstore.client.BookStoreHTTPProxy;
-import com.acertainbookstore.client.StockManagerHTTPProxy;
 import com.acertainbookstore.interfaces.BookStore;
 import com.acertainbookstore.interfaces.StockManager;
 import com.acertainbookstore.utils.BookStoreConstants;
 import com.acertainbookstore.utils.BookStoreException;
 
-/**
- * Concurrency tests for Programming Assignment 2.
- *
- * Implements:
- *  Test 1: buyBooks vs addCopies on same set S, fixed number of operations.
- *  Test 2: writer alternates buy + replenish, reader checks snapshot consistency.
- */
 public class ConcurrentBookStoreTest {
 
-	/** The local test. */
-	private static boolean localTest = true;
+    private static boolean singleLock = true;
+    private static StockManager storeManager;
+    private static BookStore client;
 
-	/** Single lock test flag */
-	private static boolean singleLock = true;
+    @BeforeClass
+    public static void setUpBeforeClass() {
+        try {
+            String singleLockProperty = System.getProperty(BookStoreConstants.PROPERTY_KEY_SINGLE_LOCK);
+            singleLock = (singleLockProperty != null) ? Boolean.parseBoolean(singleLockProperty) : singleLock;
 
-	/** The store manager. */
-	private static StockManager storeManager;
+            if (singleLock) {
+                SingleLockConcurrentCertainBookStore store = new SingleLockConcurrentCertainBookStore();
+                storeManager = store;
+                client = store;
+            } else {
+                TwoLevelLockingConcurrentCertainBookStore store = new TwoLevelLockingConcurrentCertainBookStore();
+                storeManager = store;
+                client = store;
+            }
 
-	/** The client. */
-	private static BookStore client;
+            storeManager.removeAllBooks();
+        } catch (Exception e) {
+            e.printStackTrace();
+            fail("failed to set up test");
+        }
+    }
 
-	// ----------- Test parameters (overridable with system properties) -----------
+    @Before
+    public void clearStoreBeforeEach() throws BookStoreException {
+        storeManager.removeAllBooks();
+    }
 
-	/**
-	 * Number of operations each thread should perform in Test 1.
-	 * Override with: -Dconcurrencytest.ops=2000
-	 */
-	private static final int DEFAULT_TEST1_OPS = 1000;
+    @After
+    public void clearStoreAfterEach() throws BookStoreException {
+        storeManager.removeAllBooks();
+    }
 
-	/**
-	 * Number of reader snapshots to check in Test 2.
-	 * Override with: -Dconcurrencytest.snapshots=50000
-	 */
-	private static final int DEFAULT_TEST2_SNAPSHOTS = 20000;
+    @AfterClass
+    public static void tearDownAfterClass() throws BookStoreException {
+        storeManager.removeAllBooks();
+    }
 
-	/**
-	 * How many buy+replenish cycles the writer attempts (upper bound).
-	 * Override with: -Dconcurrencytest.cycles=5000
-	 */
-	private static final int DEFAULT_TEST2_CYCLES = 5000;
+    /**
+     * addBooks helper
+     */
+    private void addBooks(int[] isbns, int initialCopies) throws BookStoreException {
+        Set<StockBook> booksToAdd = new HashSet<StockBook>();
+        for (int i = 0; i < isbns.length; i++) {
+            booksToAdd.add(new ImmutableStockBook(
+                    isbns[i],
+                    "Concurrent Book " + i,
+                    "Test Author",
+                    10.0f,
+                    initialCopies,
+                    0, 0, 0,
+                    false));
+        }
+        storeManager.addBooks(booksToAdd);
+    }
 
-	private static int getIntProperty(String key, int defaultVal) {
-		String p = System.getProperty(key);
-		if (p == null) return defaultVal;
-		try {
-			int v = Integer.parseInt(p);
-			return (v > 0) ? v : defaultVal;
-		} catch (NumberFormatException ex) {
-			return defaultVal;
-		}
-	}
+    /**
+     * oneCopyOfEach helper
+     */
+    private Set<BookCopy> oneCopyOfEach(int[] isbns) {
+        Set<BookCopy> copies = new HashSet<BookCopy>();
+        for (int i = 0; i < isbns.length; i++) {
+            copies.add(new BookCopy(isbns[i], 1));
+        }
+        return copies;
+    }
 
-	@BeforeClass
-	public static void setUpBeforeClass() {
-		try {
-			String localTestProperty = System.getProperty(BookStoreConstants.PROPERTY_KEY_LOCAL_TEST);
-			localTest = (localTestProperty != null) ? Boolean.parseBoolean(localTestProperty) : localTest;
+    /**
+     * getStockFor helper
+     */
+    private List<StockBook> getStockFor(int[] isbns) throws BookStoreException {
+        Set<Integer> isbnSet = new HashSet<Integer>();
+        for (int i = 0; i < isbns.length; i++) {
+            isbnSet.add(isbns[i]);
+        }
+        return storeManager.getBooksByISBN(isbnSet);
+    }
 
-			String singleLockProperty = System.getProperty(BookStoreConstants.PROPERTY_KEY_SINGLE_LOCK);
-			singleLock = (singleLockProperty != null) ? Boolean.parseBoolean(singleLockProperty) : singleLock;
+    /**
+     * test 1:
+     * one thread buys 1 copy of each book,
+     * another thread adds 1 copy of each book.
+     * they both operate on the same set of books.
+     */
+    @Test
+    public void testBuyAndAddCopiesInParallel() throws Exception {
+        final int[] isbns = new int[] { 1001, 1002, 1003 };
+        final int initialCopies = 100;
+        final int iterations = 100;
 
-			if (localTest) {
-				if (singleLock) {
-					SingleLockConcurrentCertainBookStore store = new SingleLockConcurrentCertainBookStore();
-					storeManager = store;
-					client = store;
-				} else {
-					TwoLevelLockingConcurrentCertainBookStore store = new TwoLevelLockingConcurrentCertainBookStore();
-					storeManager = store;
-					client = store;
-				}
-			} else {
-				storeManager = new StockManagerHTTPProxy("http://localhost:8081/stock");
-				client = new BookStoreHTTPProxy("http://localhost:8081");
-			}
+        addBooks(isbns, initialCopies);
+        final Set<BookCopy> oneOfEach = oneCopyOfEach(isbns);
 
-			storeManager.removeAllBooks();
-		} catch (Exception e) {
-			e.printStackTrace();
-			fail("Failed to set up test environment: " + e.getMessage());
-		}
-	}
+        final boolean[] failed = new boolean[] { false };
+        final String[] errorMsg = new String[] { null };
 
-	@Before
-	public void clearStoreBeforeEach() throws BookStoreException {
-		storeManager.removeAllBooks();
-	}
+        Runnable buyer = new Runnable() {
+            public void run() {
+                try {
+                    for (int i = 0; i < iterations; i++) {
+                        client.buyBooks(oneOfEach);
+                    }
+                } catch (BookStoreException e) {
+                    failed[0] = true;
+                    errorMsg[0] = "Buyer thread failed: " + e.getMessage();
+                }
+            }
+        };
 
-	@After
-	public void clearStoreAfterEach() throws BookStoreException {
-		storeManager.removeAllBooks();
-	}
+        Runnable adder = new Runnable() {
+            public void run() {
+                try {
+                    for (int i = 0; i < iterations; i++) {
+                        storeManager.addCopies(oneOfEach);
+                    }
+                } catch (BookStoreException e) {
+                    failed[0] = true;
+                    errorMsg[0] = "Adder thread failed: " + e.getMessage();
+                }
+            }
+        };
 
-	@AfterClass
-	public static void tearDownAfterClass() throws BookStoreException {
-		storeManager.removeAllBooks();
+        Thread t1 = new Thread(buyer, "buy-thread");
+        Thread t2 = new Thread(adder, "add-thread");
 
-		if (!localTest) {
-			((BookStoreHTTPProxy) client).stop();
-			((StockManagerHTTPProxy) storeManager).stop();
-		}
-	}
+        t1.start();
+        t2.start();
 
-	// ---------------------------- Helpers ----------------------------
+        t1.join();
+        t2.join();
 
-	private void addBooksToStore(Set<StockBook> books) throws BookStoreException {
-		storeManager.addBooks(books);
-	}
+        if (failed[0]) {
+            fail(errorMsg[0]);
+        }
 
-	private Set<StockBook> makeBookSet(int[] isbns, String titlePrefix, int initialCopies) {
-		Set<StockBook> books = new HashSet<>();
-		int idx = 0;
-		for (int isbn : isbns) {
-			books.add(new ImmutableStockBook(
-					isbn,
-					titlePrefix + " " + idx,
-					"Concurrent Author",
-					10.0f,
-					initialCopies,
-					0, 0, 0,
-					false
-			));
-			idx++;
-		}
-		return books;
-	}
+        List<StockBook> finalStock = getStockFor(isbns);
+        assertEquals(isbns.length, finalStock.size());
 
-	private Set<BookCopy> makeOneCopyEach(int[] isbns) {
-		Set<BookCopy> copies = new HashSet<>();
-		for (int isbn : isbns) {
-			copies.add(new BookCopy(isbn, 1));
-		}
-		return copies;
-	}
+        for (StockBook book : finalStock) {
+            assertEquals("Final copies mismatch for ISBN " + book.getISBN(),
+                    initialCopies, book.getNumCopies());
+        }
+    }
 
-	private Set<BookCopy> makeNCopiesEach(int[] isbns, int n) {
-		Set<BookCopy> copies = new HashSet<>();
-		for (int isbn : isbns) {
-			copies.add(new BookCopy(isbn, n));
-		}
-		return copies;
-	}
+    /**
+     * test 2:
+     * thread 1 writes:
+     *  - buys 1 copy
+     *  - then adds 1 copy
+     *
+     * thread 2 reads:
+     *  - getBooksByISBN
+     */
+    @Test
+    public void testReadersSeeConsistentTrilogy() throws Exception {
+        final int[] isbns = new int[] { 2001, 2002, 2003 };
+        final int baseCopies = 20;
+        final int writerIterations = 2000;
+        final int readerSnapshots = 5000;
 
-	private List<StockBook> getStockByISBN(int[] isbns) throws BookStoreException {
-		Set<Integer> set = new HashSet<>();
-		for (int isbn : isbns) set.add(isbn);
-		return storeManager.getBooksByISBN(set);
-	}
+        addBooks(isbns, baseCopies);
+        final Set<BookCopy> oneOfEach = oneCopyOfEach(isbns);
 
-	private void assertAllCopiesEqual(int[] isbns, int expectedCopies) throws BookStoreException {
-		List<StockBook> books = getStockByISBN(isbns);
-		assertEquals("Unexpected number of books in store", isbns.length, books.size());
-		for (StockBook b : books) {
-			assertEquals("Wrong final copies for ISBN " + b.getISBN(), expectedCopies, b.getNumCopies());
-		}
-	}
+        final boolean[] failed = new boolean[] { false };
+        final String[] errorMsg = new String[] { null };
+        final boolean[] running = new boolean[] { true };
 
-	// ---------------------------- Test 1 ----------------------------
-	/**
-	 * Test 1:
-	 * Two clients C1 and C2, running in different threads, each invoke a fixed number
-	 * of operations against the BookStore and StockManager interfaces.
-	 * Both operate against the same set of books S.
-	 *
-	 * C1 calls buyBooks, while C2 calls addCopies on S.
-	 *
-	 * The initial state should have a sufficient number of copies.
-	 * In the end, S should end with the same number of copies in stock as they started.
-	 */
-	@Test
-	public void testConcurrentBuyAndAddCopiesFixedOps() throws Exception {
-		final int ops = getIntProperty("concurrencytest.ops", DEFAULT_TEST1_OPS);
+        Runnable writer = new Runnable() {
+            public void run() {
+                try {
+                    for (int i = 0; i < writerIterations && running[0]; i++) {
+                        client.buyBooks(oneOfEach);
+                        storeManager.addCopies(oneOfEach);
+                    }
+                } catch (BookStoreException e) {
+                    failed[0] = true;
+                    errorMsg[0] = "writer thread failed: " + e.getMessage();
+                }
+            }
+        };
 
-		// Shared set S
-		final int[] isbns = new int[] { 1001, 1002, 1003 };
+        Runnable reader = new Runnable() {
+            public void run() {
+                try {
+                    for (int i = 0; i < readerSnapshots && !failed[0]; i++) {
+                        List<StockBook> snapshot = getStockFor(isbns);
 
-		// Make initial large enough for all buys to succeed even without help.
-		final int initialCopies = ops + 10;
+                        if (snapshot.size() != isbns.length) {
+                            failed[0] = true;
+                            errorMsg[0] = "unexpected size: " + snapshot.size();
+                            return;
+                        }
 
-		addBooksToStore(makeBookSet(isbns, "Test1 Book", initialCopies));
+                        int seenCopies = -1;
+                        for (StockBook book : snapshot) {
+                            int copies = book.getNumCopies();
+                            if (seenCopies == -1) {
+                                seenCopies = copies;
+                            } else if (copies != seenCopies) {
+                                failed[0] = true;
+                                errorMsg[0] = "inconsistent snapshot";
+                                return;
+                            }
+                        }
+                    }
+                } catch (BookStoreException e) {
+                    failed[0] = true;
+                    errorMsg[0] = "reader thread failed: " + e.getMessage();
+                } finally {
+                    running[0] = false;
+                }
+            }
+        };
 
-		final Set<BookCopy> oneCopyEach = makeOneCopyEach(isbns);
+        Thread tWriter = new Thread(writer, "writer-thread");
+        Thread tReader = new Thread(reader, "reader-thread");
 
-		final CountDownLatch startGate = new CountDownLatch(1);
-		final CountDownLatch doneGate = new CountDownLatch(2);
-		final AtomicReference<Throwable> threadFailure = new AtomicReference<>(null);
+        tWriter.start();
+        tReader.start();
 
-		Runnable buyer = () -> {
-			try {
-				startGate.await();
-				for (int i = 0; i < ops; i++) {
-					client.buyBooks(oneCopyEach);
-				}
-			} catch (Throwable t) {
-				threadFailure.compareAndSet(null, t);
-			} finally {
-				doneGate.countDown();
-			}
-		};
+        tReader.join();
+        running[0] = false;
+        tWriter.join();
 
-		Runnable adder = () -> {
-			try {
-				startGate.await();
-				for (int i = 0; i < ops; i++) {
-					storeManager.addCopies(oneCopyEach);
-				}
-			} catch (Throwable t) {
-				threadFailure.compareAndSet(null, t);
-			} finally {
-				doneGate.countDown();
-			}
-		};
+        if (failed[0]) {
+            fail(errorMsg[0]);
+        }
 
-		Thread t1 = new Thread(buyer, "Test1-Buyer");
-		Thread t2 = new Thread(adder, "Test1-Adder");
+        List<StockBook> finalStock = getStockFor(isbns);
+        assertEquals(isbns.length, finalStock.size());
 
-		t1.start();
-		t2.start();
-
-		startGate.countDown();
-
-		boolean finished = doneGate.await(60, TimeUnit.SECONDS);
-		assertTrue("Test 1 threads did not finish in time", finished);
-
-		if (threadFailure.get() != null) {
-			fail("Thread failure in Test 1: " + threadFailure.get());
-		}
-
-		// Final stock should match the initial stock per book.
-		assertAllCopiesEqual(isbns, initialCopies);
-	}
-
-	// ---------------------------- Test 2 ----------------------------
-	/**
-	 * Test 2:
-	 * Two clients C1 and C2, running in different threads, continuously invoke operations.
-	 *
-	 * C1:
-	 *  - buy a given fixed collection of books (e.g., trilogy)
-	 *  - then addCopies to replenish the stock of the bought books
-	 *
-	 * C2:
-	 *  - continuously reads snapshots (we use getBooksByISBN for quantities)
-	 *  - ensures that each snapshot is consistent:
-	 *      Either all books look like "just bought" OR all look like "just replenished"
-	 *
-	 * Test fails immediately if an inconsistent snapshot is observed.
-	 * Succeeds after a large number of consistent reads.
-	 */
-	@Test
-	public void testConsistentSnapshotsDuringBuyAndReplenish() throws Exception {
-		final int snapshotsToCheck = getIntProperty("concurrencytest.snapshots", DEFAULT_TEST2_SNAPSHOTS);
-		final int writerCyclesMax = getIntProperty("concurrencytest.cycles", DEFAULT_TEST2_CYCLES);
-
-		// Fixed collection (e.g., trilogy)
-		final int[] isbns = new int[] { 2001, 2002, 2003 };
-
-		// Choose a simple two-state model:
-		// baseCopies: "replenished" state
-		// baseCopies - 1: "just bought" state
-		final int baseCopies = 10;
-
-		addBooksToStore(makeBookSet(isbns, "Test2 Book", baseCopies));
-
-		final Set<BookCopy> oneCopyEach = makeOneCopyEach(isbns);
-
-		final CountDownLatch startGate = new CountDownLatch(1);
-		final AtomicBoolean keepRunning = new AtomicBoolean(true);
-		final AtomicReference<Throwable> threadFailure = new AtomicReference<>(null);
-
-		Runnable writer = () -> {
-			try {
-				startGate.await();
-
-				int cycles = 0;
-				while (keepRunning.get() && cycles < writerCyclesMax) {
-					// Buy 1 of each
-					client.buyBooks(oneCopyEach);
-					// Replenish 1 of each
-					storeManager.addCopies(oneCopyEach);
-					cycles++;
-				}
-			} catch (Throwable t) {
-				threadFailure.compareAndSet(null, t);
-			}
-		};
-
-		Runnable reader = () -> {
-			try {
-				startGate.await();
-
-				for (int i = 0; i < snapshotsToCheck; i++) {
-					List<StockBook> snapshot = getStockByISBN(isbns);
-
-					// We expect exactly 3 books
-					if (snapshot.size() != isbns.length) {
-						throw new AssertionError("Unexpected snapshot size: " + snapshot.size());
-					}
-
-					// Capture the observed copies for the trilogy in this snapshot
-					int[] copies = new int[isbns.length];
-					for (int j = 0; j < snapshot.size(); j++) {
-						copies[j] = snapshot.get(j).getNumCopies();
-					}
-
-					// The snapshot is consistent if:
-					//   - all are baseCopies
-					//   - OR all are baseCopies - 1
-					boolean allBase = true;
-					boolean allBought = true;
-
-					for (int c : copies) {
-						if (c != baseCopies) allBase = false;
-						if (c != baseCopies - 1) allBought = false;
-					}
-
-					if (!(allBase || allBought)) {
-						throw new AssertionError(
-								"Inconsistent snapshot observed: " + Arrays.toString(copies)
-								+ " expected all " + baseCopies + " or all " + (baseCopies - 1)
-						);
-					}
-				}
-			} catch (Throwable t) {
-				threadFailure.compareAndSet(null, t);
-			} finally {
-				keepRunning.set(false);
-			}
-		};
-
-		Thread tWriter = new Thread(writer, "Test2-Writer");
-		Thread tReader = new Thread(reader, "Test2-Reader");
-
-		tWriter.start();
-		tReader.start();
-
-		startGate.countDown();
-
-		// Join with timeouts to avoid hanging tests
-		tReader.join(TimeUnit.SECONDS.toMillis(60));
-		keepRunning.set(false);
-		tWriter.join(TimeUnit.SECONDS.toMillis(60));
-
-		if (threadFailure.get() != null) {
-			fail("Thread failure in Test 2: " + threadFailure.get());
-		}
-
-		// If we got here, we observed enough consistent snapshots.
-		assertTrue(true);
-	}
+        int copies = -1;
+        for (StockBook book : finalStock) {
+            if (copies == -1) {
+                copies = book.getNumCopies();
+            } else {
+                assertEquals("inconsistent snapshot", copies, book.getNumCopies());
+            }
+        }
+    }
 }

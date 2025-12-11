@@ -10,6 +10,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Random;
 import java.util.Set;
+import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
 import com.acertainbookstore.interfaces.BookStore;
@@ -18,9 +19,12 @@ import com.acertainbookstore.utils.BookStoreConstants;
 import com.acertainbookstore.utils.BookStoreException;
 import com.acertainbookstore.utils.BookStoreUtility;
 
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
+
 /** {@link TwoLevelLockingConcurrentCertainBookStore} implements the {@link BookStore} and
  * {@link StockManager} functionalities.
- * 
+ *
  * @see BookStore
  * @see StockManager
  */
@@ -29,6 +33,33 @@ public class TwoLevelLockingConcurrentCertainBookStore implements BookStore, Sto
 	/** The mapping of books from ISBN to {@link BookStoreBook}. */
 	private Map<Integer, BookStoreBook> bookMap = null;
 
+	private final ReadWriteLock mapLock = new ReentrantReadWriteLock(true);
+
+	private final Map<Integer, ReadWriteLock> bookLocks = new HashMap<>();
+
+	private ReadWriteLock getBookLock(int isbn) {
+		// Assumption: caller holds mapLock.readLock() or writeLock()
+		// Create-on-demand is simplest for now; you can tighten this later
+		return bookLocks.computeIfAbsent(isbn, k -> new ReentrantReadWriteLock(true));
+	}
+
+	private List<Integer> sortedIsbnFromCopies(Set<BookCopy> copies) {
+		List<Integer> sorted = copies.stream()
+										.map(book -> book.getISBN())
+										.distinct()
+										.sorted()
+										.collect(Collectors.toList());
+		return sorted;
+	}
+
+	private List<Integer> sortedIsbn(Set<Integer> isbn) {
+		List<Integer> sorted = isbn.stream()
+									.distinct()
+									.sorted()
+									.collect(Collectors.toList());
+		return sorted;
+	}
+
 	/**
 	 * Instantiates a new {@link CertainBookStore}.
 	 */
@@ -36,7 +67,7 @@ public class TwoLevelLockingConcurrentCertainBookStore implements BookStore, Sto
 		// Constructors are not synchronized
 		bookMap = new HashMap<>();
 	}
-	
+
 	private void validate(StockBook book) throws BookStoreException {
 		int isbn = book.getISBN();
 		String bookTitle = book.getTitle();
@@ -67,8 +98,8 @@ public class TwoLevelLockingConcurrentCertainBookStore implements BookStore, Sto
 		if (bookMap.containsKey(isbn)) {// Check if the book is not in stock
 			throw new BookStoreException(BookStoreConstants.ISBN + isbn + BookStoreConstants.DUPLICATED);
 		}
-	}	
-	
+	}
+
 	private void validate(BookCopy bookCopy) throws BookStoreException {
 		int isbn = bookCopy.getISBN();
 		int numCopies = bookCopy.getNumCopies();
@@ -79,12 +110,12 @@ public class TwoLevelLockingConcurrentCertainBookStore implements BookStore, Sto
 			throw new BookStoreException(BookStoreConstants.NUM_COPIES + numCopies + BookStoreConstants.INVALID);
 		}
 	}
-	
+
 	private void validate(BookEditorPick editorPickArg) throws BookStoreException {
 		int isbn = editorPickArg.getISBN();
 		validateISBNInStock(isbn); // Check if the book has valid ISBN and in stock
 	}
-	
+
 	private void validateISBNInStock(Integer ISBN) throws BookStoreException {
 		if (BookStoreUtility.isInvalidISBN(ISBN)) { // Check if the book has valid ISBN
 			throw new BookStoreException(BookStoreConstants.ISBN + ISBN + BookStoreConstants.INVALID);
@@ -96,7 +127,7 @@ public class TwoLevelLockingConcurrentCertainBookStore implements BookStore, Sto
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see
 	 * com.acertainbookstore.interfaces.StockManager#addBooks(java.util.Set)
 	 */
@@ -118,7 +149,7 @@ public class TwoLevelLockingConcurrentCertainBookStore implements BookStore, Sto
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see
 	 * com.acertainbookstore.interfaces.StockManager#addCopies(java.util.Set)
 	 */
@@ -147,7 +178,7 @@ public class TwoLevelLockingConcurrentCertainBookStore implements BookStore, Sto
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see com.acertainbookstore.interfaces.StockManager#getBooks()
 	 */
 	public List<StockBook> getBooks() {
@@ -160,7 +191,7 @@ public class TwoLevelLockingConcurrentCertainBookStore implements BookStore, Sto
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see
 	 * com.acertainbookstore.interfaces.StockManager#updateEditorPicks(java.util
 	 * .Set)
@@ -184,7 +215,7 @@ public class TwoLevelLockingConcurrentCertainBookStore implements BookStore, Sto
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see com.acertainbookstore.interfaces.BookStore#buyBooks(java.util.Set)
 	 */
 	public void buyBooks(Set<BookCopy> bookCopiesToBuy) throws BookStoreException {
@@ -232,7 +263,7 @@ public class TwoLevelLockingConcurrentCertainBookStore implements BookStore, Sto
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see
 	 * com.acertainbookstore.interfaces.StockManager#getBooksByISBN(java.util.
 	 * Set)
@@ -253,7 +284,7 @@ public class TwoLevelLockingConcurrentCertainBookStore implements BookStore, Sto
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see com.acertainbookstore.interfaces.BookStore#getBooks(java.util.Set)
 	 */
 	public List<Book> getBooks(Set<Integer> isbnSet) throws BookStoreException {
@@ -273,7 +304,7 @@ public class TwoLevelLockingConcurrentCertainBookStore implements BookStore, Sto
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see com.acertainbookstore.interfaces.BookStore#getEditorPicks(int)
 	 */
 	public List<Book> getEditorPicks(int numBooks) throws BookStoreException {
@@ -316,7 +347,7 @@ public class TwoLevelLockingConcurrentCertainBookStore implements BookStore, Sto
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see com.acertainbookstore.interfaces.BookStore#getTopRatedBooks(int)
 	 */
 	@Override
@@ -326,7 +357,7 @@ public class TwoLevelLockingConcurrentCertainBookStore implements BookStore, Sto
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see com.acertainbookstore.interfaces.StockManager#getBooksInDemand()
 	 */
 	@Override
@@ -336,7 +367,7 @@ public class TwoLevelLockingConcurrentCertainBookStore implements BookStore, Sto
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see com.acertainbookstore.interfaces.BookStore#rateBooks(java.util.Set)
 	 */
 	@Override
@@ -346,7 +377,7 @@ public class TwoLevelLockingConcurrentCertainBookStore implements BookStore, Sto
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see com.acertainbookstore.interfaces.StockManager#removeAllBooks()
 	 */
 	public void removeAllBooks() throws BookStoreException {
@@ -355,7 +386,7 @@ public class TwoLevelLockingConcurrentCertainBookStore implements BookStore, Sto
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see
 	 * com.acertainbookstore.interfaces.StockManager#removeBooks(java.util.Set)
 	 */
