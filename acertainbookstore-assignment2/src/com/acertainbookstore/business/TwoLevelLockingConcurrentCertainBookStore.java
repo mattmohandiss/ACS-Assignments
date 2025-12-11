@@ -37,6 +37,29 @@ public class TwoLevelLockingConcurrentCertainBookStore implements BookStore, Sto
 	// per-book locks
 	private Map<Integer, ReadWriteLock> bookLocks = null;
 
+	private ReadWriteLock getBookLock(int isbn) {
+		// Assumption: caller holds mapLock.readLock() or writeLock()
+		// Create-on-demand is simplest for now; you can tighten this later
+		return bookLocks.computeIfAbsent(isbn, k -> new ReentrantReadWriteLock(true));
+	}
+
+	private List<Integer> sortedIsbnFromCopies(Set<BookCopy> copies) {
+		List<Integer> sorted = copies.stream()
+								.map(book -> book.getISBN())
+								.distinct()
+								.sorted()
+								.collect(Collectors.toList());
+		return sorted;
+	}
+
+	private List<Integer> sortedIsbn(Set<Integer> isbn) {
+		List<Integer> sorted = isbn.stream()
+								.distinct()
+								.sorted()
+								.collect(Collectors.toList());
+		return sorted;
+	}
+
 	/**
 	 * Instantiates a new {@link CertainBookStore}.
 	 */
@@ -127,7 +150,7 @@ public class TwoLevelLockingConcurrentCertainBookStore implements BookStore, Sto
 				bookMap.put(isbn, new BookStoreBook(book));
 				
 				// JDE: create lock for book
-				bookLocks.put(isbn, new ReentrantReadWriteLock(true));
+				getBookLock(isbn);
 			}
 		} finally {
 			intentionLock.writeLock().unlock();
@@ -157,13 +180,10 @@ public class TwoLevelLockingConcurrentCertainBookStore implements BookStore, Sto
 			}
 
 			// Acquire exclusive locks on all books in sorted order to avoid deadlock
-			List<Integer> sortedIsbns = bookCopiesSet.stream()
-					.map(BookCopy::getISBN)
-					.sorted()
-					.collect(Collectors.toList());
+			List<Integer> sortedIsbns = sortedIsbnFromCopies(bookCopiesSet);
 			
 			for (Integer isbn : sortedIsbns) {
-				bookLocks.get(isbn).writeLock().lock();
+				getBookLock(isbn).writeLock().lock();
 			}
 			
 			try {
@@ -181,7 +201,7 @@ public class TwoLevelLockingConcurrentCertainBookStore implements BookStore, Sto
 				
 				// JDE: release locks (reverse order!)
 				for (int i = sortedIsbns.size() - 1; i >= 0; i--) {
-					bookLocks.get(sortedIsbns.get(i)).writeLock().unlock();
+					getBookLock(sortedIsbns.get(i)).writeLock().unlock();
 				}
 
 			}
@@ -200,12 +220,10 @@ public class TwoLevelLockingConcurrentCertainBookStore implements BookStore, Sto
 		intentionLock.readLock().lock();
 		try {
 			// JDE: acquire all locks on all books
-			List<Integer> sortedIsbns = bookMap.keySet().stream()
-					.sorted()
-					.collect(Collectors.toList());
+			List<Integer> sortedIsbns = sortedIsbn(bookMap.keySet());
 			
 			for (Integer isbn : sortedIsbns) {
-				bookLocks.get(isbn).readLock().lock();
+				getBookLock(isbn).readLock().lock();
 			}
 			
 			try {
@@ -218,7 +236,7 @@ public class TwoLevelLockingConcurrentCertainBookStore implements BookStore, Sto
 
 				// JDE: release locks (reverse order!)
 				for (int i = sortedIsbns.size() - 1; i >= 0; i--) {
-					bookLocks.get(sortedIsbns.get(i)).readLock().unlock();
+					getBookLock(sortedIsbns.get(i)).readLock().unlock();
 				}
 
 			}
@@ -252,13 +270,13 @@ public class TwoLevelLockingConcurrentCertainBookStore implements BookStore, Sto
 			}
 
 			// JDE: acquire X locks on all books
-			List<Integer> sortedIsbns = editorPicks.stream()
+			Set<Integer> isbnSet = editorPicks.stream()
 					.map(BookEditorPick::getISBN)
-					.sorted()
-					.collect(Collectors.toList());
+					.collect(Collectors.toSet());
+			List<Integer> sortedIsbns = sortedIsbn(isbnSet);
 			
 			for (Integer isbn : sortedIsbns) {
-				bookLocks.get(isbn).writeLock().lock();
+				getBookLock(isbn).writeLock().lock();
 			}
 			
 			try {
@@ -271,7 +289,7 @@ public class TwoLevelLockingConcurrentCertainBookStore implements BookStore, Sto
 
 				// JDE: release locks (reverse order!)
 				for (int i = sortedIsbns.size() - 1; i >= 0; i--) {
-					bookLocks.get(sortedIsbns.get(i)).writeLock().unlock();
+					getBookLock(sortedIsbns.get(i)).writeLock().unlock();
 				}
 
 			}
@@ -305,13 +323,10 @@ public class TwoLevelLockingConcurrentCertainBookStore implements BookStore, Sto
 			}
 
 			// JDE: acquire X locks on all books
-			List<Integer> sortedIsbns = bookCopiesToBuy.stream()
-					.map(BookCopy::getISBN)
-					.sorted()
-					.collect(Collectors.toList());
+			List<Integer> sortedIsbns = sortedIsbnFromCopies(bookCopiesToBuy);
 			
 			for (Integer isbnKey : sortedIsbns) {
-				bookLocks.get(isbnKey).writeLock().lock();
+				getBookLock(isbnKey).writeLock().lock();
 			}
 			
 			try {
@@ -348,7 +363,7 @@ public class TwoLevelLockingConcurrentCertainBookStore implements BookStore, Sto
 
 				// JDE: release all book locks (reverse order)
 				for (int i = sortedIsbns.size() - 1; i >= 0; i--) {
-					bookLocks.get(sortedIsbns.get(i)).writeLock().unlock();
+					getBookLock(sortedIsbns.get(i)).writeLock().unlock();
 				}
 
 			}
@@ -379,12 +394,10 @@ public class TwoLevelLockingConcurrentCertainBookStore implements BookStore, Sto
 			}
 
 			// JDE: acquire S locks on all books
-			List<Integer> sortedIsbns = isbnSet.stream()
-			.sorted()
-			.collect(Collectors.toList());
+			List<Integer> sortedIsbns = sortedIsbn(isbnSet);
 			
 			for (Integer isbn : sortedIsbns) {
-				bookLocks.get(isbn).readLock().lock();
+				getBookLock(isbn).readLock().lock();
 			}
 			
 			try {
@@ -397,7 +410,7 @@ public class TwoLevelLockingConcurrentCertainBookStore implements BookStore, Sto
 
 				// JDE: release all book locks (reverse order!)
 				for (int i = sortedIsbns.size() - 1; i >= 0; i--) {
-					bookLocks.get(sortedIsbns.get(i)).readLock().unlock();
+					getBookLock(sortedIsbns.get(i)).readLock().unlock();
 				}
 
 			}
@@ -426,12 +439,10 @@ public class TwoLevelLockingConcurrentCertainBookStore implements BookStore, Sto
 			}
 
 			// JDE: acquire S locks on all books
-			List<Integer> sortedIsbns = isbnSet.stream()
-					.sorted()
-					.collect(Collectors.toList());
+			List<Integer> sortedIsbns = sortedIsbn(isbnSet);
 			
 			for (Integer isbn : sortedIsbns) {
-				bookLocks.get(isbn).readLock().lock();
+				getBookLock(isbn).readLock().lock();
 			}
 			
 			try {
@@ -444,7 +455,7 @@ public class TwoLevelLockingConcurrentCertainBookStore implements BookStore, Sto
 
 				// JSE: releases book locks (reverse order!)
 				for (int i = sortedIsbns.size() - 1; i >= 0; i--) {
-					bookLocks.get(sortedIsbns.get(i)).readLock().unlock();
+					getBookLock(sortedIsbns.get(i)).readLock().unlock();
 				}
 
 			}
@@ -470,12 +481,10 @@ public class TwoLevelLockingConcurrentCertainBookStore implements BookStore, Sto
 		try {
 
 			// JDE: acquire S lock on all books
-			List<Integer> sortedIsbns = bookMap.keySet().stream()
-					.sorted()
-					.collect(Collectors.toList());
+			List<Integer> sortedIsbns = sortedIsbn(bookMap.keySet());
 			
 			for (Integer isbn : sortedIsbns) {
-				bookLocks.get(isbn).readLock().lock();
+				getBookLock(isbn).readLock().lock();
 			}
 			
 			try {
@@ -516,7 +525,7 @@ public class TwoLevelLockingConcurrentCertainBookStore implements BookStore, Sto
 
 				// JDE: release all book locks (reverse order!)
 				for (int i = sortedIsbns.size() - 1; i >= 0; i--) {
-					bookLocks.get(sortedIsbns.get(i)).readLock().unlock();
+					getBookLock(sortedIsbns.get(i)).readLock().unlock();
 				}
 
 			}
