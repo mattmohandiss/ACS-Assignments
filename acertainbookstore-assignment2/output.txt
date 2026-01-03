@@ -1,18 +1,9 @@
-* You are assisting me with drafting a response for an overleaf submission.
-  - Fill out the part for 'TwoLevelLockingConcurrentCertainBookStore' given the code below.
+* You are assisting me with answering a question for an assignment.
 
 ##################################
-## TASK DESCRIPTION
+## QUESTiON
 ##################################
-What strategy have you followed to achieve before-or-after atomicity?
-
-##################################
-## CURRENT OVERLEAF SUBMISSION
-##################################
-\subsection{What strategy have you followed to achieve before-or-after atomicity?}
-\noindent\texttt{SingleLockConcurrentCertainBookStore:} \\ We enforce \textit{before-or-after} atomicity. This is achieved be protecting the state of the store (\texttt{bookMap} with a single lock (\texttt{ReentrantReadWriteLock}). All write operations in the \texttt{BookStore} and \texttt{StockManager} acquire a write lock for the full duration of the method. We acquire the lock before the \textit{logic} of the methods are executed. And release them after (see \texttt{try/finally}. Likewise, read operations acquire a read lock for the duration. This locking scheme ensures that no two writers or write/read can access any single object in the book store. \\
-
-\noindent\texttt{TwoLevelLockingConcurrentCertainBookStore:}
+Is there any scalability bottleneck with respect to the number of clients in the bookstore after your implementation?
 
 ##################################
 ## JAVA PROJECT
@@ -976,8 +967,6 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Random;
 import java.util.Set;
-import java.util.concurrent.locks.ReadWriteLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.stream.Collectors;
 
 import com.acertainbookstore.interfaces.BookStore;
@@ -985,6 +974,9 @@ import com.acertainbookstore.interfaces.StockManager;
 import com.acertainbookstore.utils.BookStoreConstants;
 import com.acertainbookstore.utils.BookStoreException;
 import com.acertainbookstore.utils.BookStoreUtility;
+
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /** {@link SingleLockConcurrentCertainBookStore} implements the {@link BookStore} and
  * {@link StockManager} functionalities.
@@ -997,8 +989,7 @@ public class SingleLockConcurrentCertainBookStore implements BookStore, StockMan
 	/** The mapping of books from ISBN to {@link BookStoreBook}. */
 	private Map<Integer, BookStoreBook> bookMap = null;
 
-	/** Single read-write lock for the entire database. */
-	private final ReadWriteLock globalLock = new ReentrantReadWriteLock(true);
+	private final ReadWriteLock mapLock = new ReentrantReadWriteLock(true);
 
 	/**
 	 * Instantiates a new {@link CertainBookStore}.
@@ -1073,13 +1064,12 @@ public class SingleLockConcurrentCertainBookStore implements BookStore, StockMan
 	 * com.acertainbookstore.interfaces.StockManager#addBooks(java.util.Set)
 	 */
 	public void addBooks(Set<StockBook> bookSet) throws BookStoreException {
-		if (bookSet == null) {
-			throw new BookStoreException(BookStoreConstants.NULL_INPUT);
-		}
-
-		// JDE: global X lock
-		globalLock.writeLock().lock();
+		mapLock.writeLock().lock();
 		try {
+			if (bookSet == null) {
+				throw new BookStoreException(BookStoreConstants.NULL_INPUT);
+			}
+
 			// Check if all are there
 			for (StockBook book : bookSet) {
 				validate(book);
@@ -1089,11 +1079,8 @@ public class SingleLockConcurrentCertainBookStore implements BookStore, StockMan
 				int isbn = book.getISBN();
 				bookMap.put(isbn, new BookStoreBook(book));
 			}
-
 		} finally {
-
-			globalLock.writeLock().unlock();
-
+			mapLock.writeLock().unlock();
 		}
 	}
 
@@ -1104,16 +1091,14 @@ public class SingleLockConcurrentCertainBookStore implements BookStore, StockMan
 	 * com.acertainbookstore.interfaces.StockManager#addCopies(java.util.Set)
 	 */
 	public void addCopies(Set<BookCopy> bookCopiesSet) throws BookStoreException {
-		int isbn;
-		int numCopies;
-
-		if (bookCopiesSet == null) {
-			throw new BookStoreException(BookStoreConstants.NULL_INPUT);
-		}
-
-		// JDE: X lock
-		globalLock.writeLock().lock();
+		mapLock.writeLock().lock();
 		try {
+			int isbn;
+			int numCopies;
+
+			if (bookCopiesSet == null) {
+				throw new BookStoreException(BookStoreConstants.NULL_INPUT);
+			}
 
 			for (BookCopy bookCopy : bookCopiesSet) {
 				validate(bookCopy);
@@ -1128,11 +1113,8 @@ public class SingleLockConcurrentCertainBookStore implements BookStore, StockMan
 				book = bookMap.get(isbn);
 				book.addCopies(numCopies);
 			}
-
 		} finally {
-
-			globalLock.writeLock().unlock();
-
+			mapLock.writeLock().unlock();
 		}
 	}
 
@@ -1142,20 +1124,15 @@ public class SingleLockConcurrentCertainBookStore implements BookStore, StockMan
 	 * @see com.acertainbookstore.interfaces.StockManager#getBooks()
 	 */
 	public List<StockBook> getBooks() {
-
-		// JDE: S lock
-		globalLock.readLock().lock();
+		mapLock.readLock().lock();
 		try {
 			Collection<BookStoreBook> bookMapValues = bookMap.values();
 
 			return bookMapValues.stream()
-	                .map(book -> book.immutableStockBook())
-	                .collect(Collectors.toList());
-
+					.map(book -> book.immutableStockBook())
+					.collect(Collectors.toList());
 		} finally {
-
-			globalLock.readLock().unlock();
-
+			mapLock.readLock().unlock();
 		}
 	}
 
@@ -1167,14 +1144,15 @@ public class SingleLockConcurrentCertainBookStore implements BookStore, StockMan
 	 * .Set)
 	 */
 	public void updateEditorPicks(Set<BookEditorPick> editorPicks) throws BookStoreException {
-		// Check that all ISBNs that we add/remove are there first.
-		if (editorPicks == null) {
-			throw new BookStoreException(BookStoreConstants.NULL_INPUT);
-		}
-
-		// JDE: X lock
-		globalLock.writeLock().lock();
+		mapLock.writeLock().lock();
 		try {
+			// Check that all ISBNs that we add/remove are there first.
+			if (editorPicks == null) {
+				throw new BookStoreException(BookStoreConstants.NULL_INPUT);
+			}
+
+			int isbnValue;
+
 			for (BookEditorPick editorPickArg : editorPicks) {
 				validate(editorPickArg);
 			}
@@ -1182,11 +1160,8 @@ public class SingleLockConcurrentCertainBookStore implements BookStore, StockMan
 			for (BookEditorPick editorPickArg : editorPicks) {
 				bookMap.get(editorPickArg.getISBN()).setEditorPick(editorPickArg.isEditorPick());
 			}
-
 		} finally {
-
-			globalLock.writeLock().unlock();
-
+			mapLock.writeLock().unlock();
 		}
 	}
 
@@ -1196,13 +1171,12 @@ public class SingleLockConcurrentCertainBookStore implements BookStore, StockMan
 	 * @see com.acertainbookstore.interfaces.BookStore#buyBooks(java.util.Set)
 	 */
 	public void buyBooks(Set<BookCopy> bookCopiesToBuy) throws BookStoreException {
-		if (bookCopiesToBuy == null) {
-			throw new BookStoreException(BookStoreConstants.NULL_INPUT);
-		}
-
-		// JDE: X lock
-		globalLock.writeLock().lock();
+		mapLock.writeLock().lock();
 		try {
+			if (bookCopiesToBuy == null) {
+				throw new BookStoreException(BookStoreConstants.NULL_INPUT);
+			}
+
 			// Check that all ISBNs that we buy are there first.
 			int isbn;
 			BookStoreBook book;
@@ -1239,11 +1213,8 @@ public class SingleLockConcurrentCertainBookStore implements BookStore, StockMan
 				book = bookMap.get(bookCopyToBuy.getISBN());
 				book.buyCopies(bookCopyToBuy.getNumCopies());
 			}
-
 		} finally {
-
-			globalLock.writeLock().unlock();
-
+			mapLock.writeLock().unlock();
 		}
 	}
 
@@ -1255,24 +1226,21 @@ public class SingleLockConcurrentCertainBookStore implements BookStore, StockMan
 	 * Set)
 	 */
 	public List<StockBook> getBooksByISBN(Set<Integer> isbnSet) throws BookStoreException {
-		if (isbnSet == null) {
-			throw new BookStoreException(BookStoreConstants.NULL_INPUT);
-		}
-
-		// JDE: S lock
-		globalLock.readLock().lock();
+		mapLock.readLock().lock();
 		try {
+			if (isbnSet == null) {
+				throw new BookStoreException(BookStoreConstants.NULL_INPUT);
+			}
+
 			for (Integer ISBN : isbnSet) {
 				validateISBNInStock(ISBN);
 			}
 
 			return isbnSet.stream()
-	                .map(isbn -> bookMap.get(isbn).immutableStockBook())
-	                .collect(Collectors.toList());
+					.map(isbn -> bookMap.get(isbn).immutableStockBook())
+					.collect(Collectors.toList());
 		} finally {
-
-			globalLock.readLock().unlock();
-
+			mapLock.readLock().unlock();
 		}
 	}
 
@@ -1282,13 +1250,11 @@ public class SingleLockConcurrentCertainBookStore implements BookStore, StockMan
 	 * @see com.acertainbookstore.interfaces.BookStore#getBooks(java.util.Set)
 	 */
 	public List<Book> getBooks(Set<Integer> isbnSet) throws BookStoreException {
-		if (isbnSet == null) {
-			throw new BookStoreException(BookStoreConstants.NULL_INPUT);
-		}
-
-		// JDE: S lock
-		globalLock.readLock().lock();
+		mapLock.readLock().lock();
 		try {
+			if (isbnSet == null) {
+				throw new BookStoreException(BookStoreConstants.NULL_INPUT);
+			}
 
 			// Check that all ISBNs that we rate are there to start with.
 			for (Integer ISBN : isbnSet) {
@@ -1296,13 +1262,10 @@ public class SingleLockConcurrentCertainBookStore implements BookStore, StockMan
 			}
 
 			return isbnSet.stream()
-	                .map(isbn -> bookMap.get(isbn).immutableBook())
-	                .collect(Collectors.toList());
-
+					.map(isbn -> bookMap.get(isbn).immutableBook())
+					.collect(Collectors.toList());
 		} finally {
-
-			globalLock.readLock().unlock();
-
+			mapLock.readLock().unlock();
 		}
 	}
 
@@ -1312,17 +1275,16 @@ public class SingleLockConcurrentCertainBookStore implements BookStore, StockMan
 	 * @see com.acertainbookstore.interfaces.BookStore#getEditorPicks(int)
 	 */
 	public List<Book> getEditorPicks(int numBooks) throws BookStoreException {
-		if (numBooks < 0) {
-			throw new BookStoreException("numBooks = " + numBooks + ", but it must be positive");
-		}
-
-		// JDE: S lock
-		globalLock.readLock().lock();
+		mapLock.readLock().lock();
 		try {
+			if (numBooks < 0) {
+				throw new BookStoreException("numBooks = " + numBooks + ", but it must be positive");
+			}
+
 			List<BookStoreBook> listAllEditorPicks = bookMap.entrySet().stream()
-	                .map(pair -> pair.getValue())
+					.map(pair -> pair.getValue())
 					.filter(book -> book.isEditorPick())
-	                .collect(Collectors.toList());
+					.collect(Collectors.toList());
 
 			// Find numBooks random indices of books that will be picked.
 			Random rand = new Random();
@@ -1346,15 +1308,12 @@ public class SingleLockConcurrentCertainBookStore implements BookStore, StockMan
 				}
 			}
 
-	        // Return all the books by the randomly chosen indices.
-	        return tobePicked.stream()
-	                .map(index -> listAllEditorPicks.get(index).immutableBook())
-	                .collect(Collectors.toList());
-
+			// Return all the books by the randomly chosen indices.
+			return tobePicked.stream()
+					.map(index -> listAllEditorPicks.get(index).immutableBook())
+					.collect(Collectors.toList());
 		} finally {
-
-			globalLock.readLock().unlock();
-
+			mapLock.readLock().unlock();
 		}
 	}
 
@@ -1394,16 +1353,11 @@ public class SingleLockConcurrentCertainBookStore implements BookStore, StockMan
 	 * @see com.acertainbookstore.interfaces.StockManager#removeAllBooks()
 	 */
 	public void removeAllBooks() throws BookStoreException {
-		// JDE: X lock
-		globalLock.writeLock().lock();
+		mapLock.writeLock().lock();
 		try {
-
 			bookMap.clear();
-
 		} finally {
-
-			globalLock.writeLock().unlock();
-
+			mapLock.writeLock().unlock();
 		}
 	}
 
@@ -1414,13 +1368,12 @@ public class SingleLockConcurrentCertainBookStore implements BookStore, StockMan
 	 * com.acertainbookstore.interfaces.StockManager#removeBooks(java.util.Set)
 	 */
 	public void removeBooks(Set<Integer> isbnSet) throws BookStoreException {
-		if (isbnSet == null) {
-			throw new BookStoreException(BookStoreConstants.NULL_INPUT);
-		}
-
-		// JDE: X lock
-		globalLock.writeLock().lock();
+		mapLock.writeLock().lock();
 		try {
+			if (isbnSet == null) {
+				throw new BookStoreException(BookStoreConstants.NULL_INPUT);
+			}
+
 			for (Integer ISBN : isbnSet) {
 				if (BookStoreUtility.isInvalidISBN(ISBN)) {
 					throw new BookStoreException(BookStoreConstants.ISBN + ISBN + BookStoreConstants.INVALID);
@@ -1434,11 +1387,8 @@ public class SingleLockConcurrentCertainBookStore implements BookStore, StockMan
 			for (int isbn : isbnSet) {
 				bookMap.remove(isbn);
 			}
-
 		} finally {
-
-			globalLock.writeLock().unlock();
-
+			mapLock.writeLock().unlock();
 		}
 	}
 }
